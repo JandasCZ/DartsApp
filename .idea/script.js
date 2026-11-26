@@ -59,6 +59,7 @@ function ensureStatsRow(playerId) {
     if (!row) {
         row = {
             playerId,
+            games: 0,
             wins: 0,
             t20: 0,
             t19: 0,
@@ -81,6 +82,7 @@ function commitMatchToDb(winnerPlayerId) {
 
     state.players.forEach(p => {
         const row = ensureStatsRow(p.id);
+        row.games = (row.games || 0) + 1;
         row.t20 += p.matchStats.t20;
         row.t19 += p.matchStats.t19;
         row.misses += p.matchStats.misses;
@@ -268,6 +270,7 @@ function renderLeaderboard() {
         return {
             id: p.id,
             name: p.name,
+            games: s.games || 0,
             wins: s.wins || 0,
             avg: sDarts > 0 ? ((sPoints / sDarts) * 3).toFixed(1) : '0.0',
             t20: s.t20 || 0,
@@ -334,11 +337,12 @@ function renderLeaderboard() {
     // 3) Tabulka všech hráčů
     const tbody = document.getElementById('lb-table-body');
     if (byWins.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="lb-empty">Zatím nejsou uloženi žádní hráči. Odehraj první hru!</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="lb-empty">Zatím nejsou uloženi žádní hráči. Odehraj první hru!</td></tr>';
     } else {
         tbody.innerHTML = byWins.map(p => `
       <tr>
         <td><strong>${escapeHtml(p.name)}</strong></td>
+        <td>${p.games}</td>
         <td>${p.wins}</td>
         <td>${p.avg}</td>
         <td>${p.t20t19} <span style="color:var(--muted);font-size:0.76rem;">(${p.t20}/${p.t19})</span></td>
