@@ -226,6 +226,29 @@ button:hover {
     gap: 8px;
 }
 
+.lb-tabs {
+    display: flex;
+    gap: 8px;
+    background: var(--bg);
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid #2a313b;
+}
+
+.lb-tab {
+    flex: 1;
+    background: transparent;
+    color: var(--muted);
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    border-radius: 7px;
+}
+
+.lb-tab.active {
+    background: var(--accent);
+    color: #111;
+}
+
 .section-caption {
     font-size: 0.82rem;
     text-transform: uppercase;
