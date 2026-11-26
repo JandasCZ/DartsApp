@@ -7,6 +7,7 @@ const ROUND_THRESHOLDS = { 301: 10, 501: 15, 701: 20 };
 const BOARD_RADIUS_SVG = 235;
 const BOARD_RADIUS_CM = 22.5;
 const SCORING_RADIUS_SVG = 186; // vnější okraj Double prstence
+const CRICKET_TARGETS = [20, 19, 18, 17, 16, 15, 25];
 
 // Klíče pro dvě oddělené tabulky v localStorage
 const STORAGE_KEY_PLAYERS = 'darts_db_players';
@@ -108,7 +109,7 @@ function commitMatchToDb(winnerPlayerId) {
         date: new Date().toLocaleString('cs-CZ', {
             day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
         }),
-        mode: state.startScore,
+        mode: state.gameMode === 'cricket' ? 'Cricket' : state.startScore,
         doubleOut: state.doubleOut,
         endedByBulls: state.phase === 'bulls',
         winnerId: winnerPlayerId,
@@ -183,6 +184,13 @@ const winSubtitle = document.getElementById('win-subtitle');
 const minimizeModalBtn = document.getElementById('minimize-modal-btn');
 const restoreModalBtn = document.getElementById('restore-modal-btn');
 const endGameBtn = document.getElementById('end-game-btn');
+const gameModeSelect = document.getElementById('game-mode');
+const doubleOutRow = document.getElementById('double-out-row');
+const cricketBoardEl = document.getElementById('cricket-board');
+
+gameModeSelect.addEventListener('change', () => {
+    doubleOutRow.style.display = gameModeSelect.value === 'cricket' ? 'none' : 'flex';
+});
 
 function createEl(tag, attrs = {}) {
     const el = document.createElementNS(NS, tag);
@@ -543,7 +551,8 @@ function buildDartboard() {
             const path = createEl('path', {
                 d: sectorPath(ring.r1, ring.r2, startDeg, endDeg),
                 fill,
-                class: 'segment'
+                class: 'segment',
+                'data-num': num
             });
 
             path.addEventListener('mouseenter', () => {
@@ -555,7 +564,7 @@ function buildDartboard() {
             path.addEventListener('click', (e) => {
                 if (state.phase === 'normal') {
                     e.stopPropagation();
-                    handleThrow(points, label, ring.isDouble);
+                    handleThrow(points, label, ring.isDouble, false, num, ring.mult);
                 }
             });
 
@@ -571,25 +580,33 @@ function buildDartboard() {
             'font-weight': '700',
             'text-anchor': 'middle',
             'dominant-baseline': 'central',
+            class: 'board-num',
+            'data-num': num,
             style: 'pointer-events: none;'
         });
         text.textContent = num;
         boardLayer.appendChild(text);
     });
 
-    const outerBull = createEl('circle', { cx: 0, cy: 0, r: 28, fill: '#16a34a', class: 'segment' });
+    const outerBull = createEl('circle', { cx: 0, cy: 0, r: 28, fill: '#16a34a', class: 'segment', 'data-num': 25 });
     outerBull.addEventListener('mouseenter', () => { if (state.phase === 'normal') hoverInfo.textContent = '25 (Vnější střed)'; });
     outerBull.addEventListener('mouseleave', () => { if (state.phase === 'normal') hoverInfo.textContent = 'Klikni na plošku terče'; });
     outerBull.addEventListener('click', (e) => {
-        if (state.phase === 'normal') { e.stopPropagation(); handleThrow(25, '25', false); }
+        if (state.phase === 'normal') {
+            e.stopPropagation();
+            handleThrow(25, '25', false, false, 25, 1);
+        }
     });
     boardLayer.appendChild(outerBull);
 
-    const innerBull = createEl('circle', { cx: 0, cy: 0, r: 12, fill: '#dc2626', class: 'segment' });
+    const innerBull = createEl('circle', { cx: 0, cy: 0, r: 12, fill: '#dc2626', class: 'segment', 'data-num': 25});
     innerBull.addEventListener('mouseenter', () => { if (state.phase === 'normal') hoverInfo.textContent = 'BULL (50 b.)'; });
     innerBull.addEventListener('mouseleave', () => { if (state.phase === 'normal') hoverInfo.textContent = 'Klikni na plošku terče'; });
     innerBull.addEventListener('click', (e) => {
-        if (state.phase === 'normal') { e.stopPropagation(); handleThrow(50, 'BULL', true); }
+        if (state.phase === 'normal') {
+            e.stopPropagation();
+            handleThrow(50, 'BULL', true, false, 25, 2);
+        }
     });
     boardLayer.appendChild(innerBull);
 }
@@ -689,8 +706,10 @@ function renderBullsDarts() {
 // =========================================================
 // LOGIKA HRY
 // =========================================================
-function startGame(startScore, doubleOut, selectedPlayers) {
+function startGame(gameMode, doubleOut, selectedPlayers) {
     preWinDbSnapshot = null;
+    const isCricket = gameMode === 'cricket';
+    const startScore = isCricket ? 0 : parseInt(gameMode, 10);
 
     const players = selectedPlayers.map((p, i) => ({
         id: p.id,
@@ -700,13 +719,15 @@ function startGame(startScore, doubleOut, selectedPlayers) {
         dartsThrown: 0,
         lastTurn: [],
         finishedRank: null,
+        cricketMarks: { 20: 0, 19: 0, 18: 0, 17: 0, 16: 0, 15: 0, 25: 0 },
         matchStats: { t20: 0, t19: 0, misses: 0, bestTurn: 0, scoringPoints: 0, scoringDarts: 0 }
     }));
 
     state = {
+        gameMode: isCricket ? 'cricket' : startScore,
         phase: 'normal',
         startScore,
-        doubleOut,
+        doubleOut: isCricket ? false : doubleOut,
         roundNumber: 1,
         bullsPending: false,
         players,
@@ -732,7 +753,8 @@ function startGame(startScore, doubleOut, selectedPlayers) {
 
 document.getElementById('start-btn').addEventListener('click', () => {
     setupError.textContent = '';
-    const startScore = parseInt(document.getElementById('game-mode').value, 10);
+    const rawMode = document.getElementById('game-mode').value;
+    const gameMode = rawMode === 'cricket' ? 'cricket' : parseInt(rawMode, 10);
     const count = parseInt(playerCountSelect.value, 10);
     const doubleOut = document.getElementById('double-out').checked;
 
@@ -765,10 +787,10 @@ document.getElementById('start-btn').addEventListener('click', () => {
     }
 
     const chosenPlayers = pendingPlayers.map(item => item.existing || getOrCreatePlayer(item.name));
-    startGame(startScore, doubleOut, chosenPlayers);
+    startGame(gameMode, doubleOut, chosenPlayers);
 });
 
-function handleThrow(points, label, isDouble, isWall = false) {
+function handleThrow(points, label, isDouble, isWall = false, hitNum = 0, mult = 1) {
     if (state.winner || state.phase !== 'normal') return;
 
     historyStack.push(JSON.parse(JSON.stringify(state)));
@@ -776,14 +798,63 @@ function handleThrow(points, label, isDouble, isWall = false) {
     state.statusType = null;
 
     const player = state.players[state.currentPlayerIndex];
-    const scoreBeforeThrow = player.score;
-    const newScore = player.score - points;
     player.dartsThrown += 1;
 
-    // Průběžné statistiky hodu
+    // Průběžné statistiky hodu (pro všechny režimy)
     if (label === 'T20') player.matchStats.t20 += 1;
     if (label === 'T19') player.matchStats.t19 += 1;
     if (isWall) player.matchStats.misses += 1;
+
+    // === LOGIKA PRO CRICKET ===
+    if (state.gameMode === 'cricket') {
+        let earnedPoints = 0;
+
+        if (CRICKET_TARGETS.includes(hitNum)) {
+            const currentMarks = player.cricketMarks[hitNum];
+            const newMarks = Math.min(3, currentMarks + mult);
+            const overflow = (currentMarks + mult) - 3;
+            player.cricketMarks[hitNum] = newMarks;
+
+            const someoneStillOpen = state.players.some(
+                (other, idx) => idx !== state.currentPlayerIndex && other.cricketMarks[hitNum] < 3
+            );
+
+            if (overflow > 0 && someoneStillOpen) {
+                earnedPoints = overflow * hitNum;
+                player.score += earnedPoints;
+            }
+        }
+
+        state.currentTurn.push(label);
+        state.currentTurnPoints += earnedPoints;
+
+        const allClosed = CRICKET_TARGETS.every(t => player.cricketMarks[t] >= 3);
+        const hasTopScore = state.players.every(other => player.score >= other.score);
+
+        if (allClosed && hasTopScore) {
+            if (state.currentTurnPoints > player.matchStats.bestTurn) {
+                player.matchStats.bestTurn = state.currentTurnPoints;
+            }
+            player.lastTurn = [...state.currentTurn];
+            state.winner = player.name;
+            state.statusMessage = `🏆 ${player.name} vyhrál Cricket (${player.score} b., ${player.dartsThrown} šipek)!`;
+            state.statusType = 'win';
+            commitMatchToDb(player.id);
+        } else if (state.currentTurn.length === 3) {
+            if (state.currentTurnPoints > player.matchStats.bestTurn) {
+                player.matchStats.bestTurn = state.currentTurnPoints;
+            }
+            player.lastTurn = [...state.currentTurn];
+            nextPlayer();
+        }
+
+        renderGame();
+        return;
+    }
+
+    // === LOGIKA PRO 301 / 501 / 701 ===
+    const scoreBeforeThrow = player.score;
+    const newScore = player.score - points;
 
     // Do průměru počítáme jen šipky hozené při skóre >= 40
     if (scoreBeforeThrow >= 40) {
@@ -931,6 +1002,54 @@ function handleBullsThrow(x, y) {
     renderGame();
 }
 
+function updateBoardHighlights() {
+    const isCricket = state.gameMode === 'cricket';
+    const elements = svg.querySelectorAll('[data-num]');
+
+    elements.forEach(el => {
+        const num = parseInt(el.getAttribute('data-num'), 10);
+        if (!isCricket) {
+            el.classList.remove('dimmed');
+            return;
+        }
+
+        const isTarget = CRICKET_TARGETS.includes(num);
+        const isDead = isTarget && state.players.length > 0 && state.players.every(p => p.cricketMarks[num] >= 3);
+        el.classList.toggle('dimmed', !isTarget || isDead);
+    });
+}
+
+function renderCricketBoard() {
+    if (state.gameMode !== 'cricket') {
+        cricketBoardEl.style.display = 'none';
+        return;
+    }
+
+    cricketBoardEl.style.display = 'block';
+    const markSymbols = ['', '/', 'X', '⊗'];
+
+    const headerCells = state.players.map(p =>
+        `<th style="color:${p.color};">${escapeHtml(p.name)}</th>`
+    ).join('');
+
+    const rows = CRICKET_TARGETS.map(target => {
+        const isDead = state.players.every(p => p.cricketMarks[target] >= 3);
+        const label = target === 25 ? 'BULL' : target;
+        const cells = state.players.map(p => {
+            const m = p.cricketMarks[target];
+            return `<td class="cricket-mark${m >= 3 ? ' closed' : ''}">${markSymbols[m]}</td>`;
+        }).join('');
+        return `<tr class="${isDead ? 'dead-row' : ''}"><td class="cricket-target">${label}</td>${cells}</tr>`;
+    }).join('');
+
+    cricketBoardEl.innerHTML = `
+    <table class="cricket-table">
+      <thead><tr><th>Cíl</th>${headerCells}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
 // =========================================================
 // OVLÁDACÍ TLAČÍTKA A MODAL
 // =========================================================
@@ -997,7 +1116,7 @@ restoreModalBtn.addEventListener('click', () => {
 document.getElementById('rematch-btn').addEventListener('click', () => {
     hideModalCompletely();
     const samePlayers = state.players.map(p => ({ id: p.id, name: p.name }));
-    startGame(state.startScore, state.doubleOut, samePlayers);
+    startGame(state.gameMode, state.doubleOut, samePlayers);
 });
 
 function returnToMenu() {
@@ -1018,8 +1137,11 @@ function renderGame() {
     const threshold = ROUND_THRESHOLDS[state.startScore] || 12;
     const completedRounds = state.roundNumber - 1;
 
+    const modeLabel = state.gameMode === 'cricket'
+        ? 'Cricket'
+        : `${state.startScore} ${state.doubleOut ? '(DO)' : '(SO)'}`;
     document.getElementById('mode-display').innerHTML =
-        `Režim: <strong>${state.startScore}</strong> ${state.doubleOut ? '(DO)' : '(SO)'} • Kolo: <strong>${state.roundNumber}</strong>`;
+        `Režim: <strong>${modeLabel}</strong> • Kolo: <strong>${state.roundNumber}</strong>`;
 
     if (state.phase === 'bulls') {
         svg.classList.add('bulls-mode');
@@ -1035,7 +1157,7 @@ function renderGame() {
         hoverInfo.textContent = 'Klikni na plošku terče';
 
         endGameBtn.style.display = (state.finishedOrder.length > 0 && !state.winner) ? 'block' : 'none';
-        if (completedRounds >= threshold && !state.winner && state.finishedOrder.length === 0) {
+        if (state.gameMode !== 'cricket' && completedRounds >= threshold && !state.winner && state.finishedOrder.length === 0) {
             bullsBtn.style.display = 'block';
             if (state.bullsPending) {
                 bullsBtn.classList.add('pending');
@@ -1120,6 +1242,8 @@ function renderGame() {
     });
 
     renderBullsDarts();
+    updateBoardHighlights();
+    renderCricketBoard();
 
     if (state.winner) {
         winTitle.textContent = `${state.winner} vyhrál!`;

@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Počítadlo šipek</title>
+  <title>Darts APP</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 </head>
 <body>
 
@@ -17,9 +18,10 @@
     <div class="form-group">
       <label for="game-mode">Režim hry</label>
       <select id="game-mode">
-        <option value="301">301</option>
         <option value="501" selected>501</option>
+        <option value="301">301</option>
         <option value="701">701</option>
+        <option value="cricket">Cricket</option>
       </select>
     </div>
 
@@ -38,7 +40,7 @@
       <div id="player-names" class="player-inputs"></div>
     </div>
 
-    <label class="checkbox-row">
+    <label class="checkbox-row" id="double-out-row">
       <input type="checkbox" id="double-out" />
       <span>Double Out (zavírání dvojnásobkem nebo středem)</span>
     </label>
@@ -89,7 +91,7 @@
   <!-- Spodní panel: Poslední odehrané hry -->
   <div class="recent-card">
     <div class="lb-header">
-      <h2>🕒 Poslední hry</h2>
+      <h2>🕒 Match History</h2>
     </div>
     <div class="recent-list" id="recent-games-list"></div>
   </div>
@@ -109,7 +111,7 @@
   <div class="sidebar">
     <div class="top-bar">
       <div class="mode-badge" id="mode-display"></div>
-      <button class="btn-danger btn-small" id="new-game-btn">Nová hra</button>
+      <button class="btn-danger btn-small" id="new-game-btn">Zpět do menu</button>
     </div>
 
     <button class="btn-bulls" id="bulls-btn">🎯 Středy?</button>
@@ -126,6 +128,7 @@
       </div>
     </div>
 
+    <div class="cricket-board" id="cricket-board"></div>
     <div class="players-grid" id="players-grid"></div>
   </div>
 </div>
