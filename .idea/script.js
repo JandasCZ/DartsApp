@@ -3,7 +3,7 @@
 // =========================================================
 const BOARD_NUMBERS = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
 const PLAYER_COLORS = ['#3b82f6', '#22c55e', '#facc15', '#ef4444'];
-const ROUND_THRESHOLDS = { 301: 8, 501: 12, 701: 16 };
+const ROUND_THRESHOLDS = { 301: 10, 501: 15, 701: 20 };
 const BOARD_RADIUS_SVG = 235;
 const BOARD_RADIUS_CM = 22.5;
 const SCORING_RADIUS_SVG = 186; // vnější okraj Double prstence
