@@ -255,7 +255,6 @@ function renderCricketBoard() {
     }
 
     cricketBoardEl.style.display = 'block';
-    const markSymbols = ['', '/', 'X', '⊗'];
 
     const headerCells = state.players.map(p =>
         `<th style="color:${p.color};">${escapeHtml(p.name)}</th>`
@@ -266,7 +265,14 @@ function renderCricketBoard() {
         const label = target === 25 ? 'BULL' : target;
         const cells = state.players.map(p => {
             const m = p.cricketMarks[target];
-            return `<td class="cricket-mark${m >= 3 ? ' closed' : ''}">${markSymbols[m]}</td>`;
+            const isClosed = m >= 3;
+            const dots = [1, 2, 3].map(i => {
+                const cls = isClosed
+                    ? 'cricket-dot closed'
+                    : (i <= m ? 'cricket-dot filled' : 'cricket-dot');
+                return `<span class="${cls}"></span>`;
+            }).join('');
+            return `<td><div class="cricket-dots">${dots}</div></td>`;
         }).join('');
         return `<tr class="${isDead ? 'dead-row' : ''}"><td class="cricket-target">${label}</td>${cells}</tr>`;
     }).join('');

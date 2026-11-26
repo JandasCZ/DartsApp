@@ -1,8 +1,18 @@
 // =========================================================
 // MENU: VÝBĚR HRÁČŮ (COMBOBOX) + LEADERBOARD
 // =========================================================
+function setLeaderboardTab(tab) {
+    activeLeaderboardTab = tab;
+    document.querySelectorAll('.lb-tab').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === tab);
+    });
+    renderLeaderboard();
+}
+
 gameModeSelect.addEventListener('change', () => {
-    doubleOutRow.style.display = gameModeSelect.value === 'cricket' ? 'none' : 'flex';
+    const isCricket = gameModeSelect.value === 'cricket';
+    doubleOutRow.style.display = isCricket ? 'none' : 'flex';
+    setLeaderboardTab(isCricket ? 'cricket' : 'x01');
 });
 
 playerCountSelect.addEventListener('change', renderPlayerInputs);
@@ -107,9 +117,7 @@ function syncPlayerSelectOptions() {
 // Přepínání záložek x01 / Cricket
 document.querySelectorAll('.lb-tab').forEach(btn => {
     btn.addEventListener('click', () => {
-        activeLeaderboardTab = btn.dataset.tab;
-        document.querySelectorAll('.lb-tab').forEach(b => b.classList.toggle('active', b === btn));
-        renderLeaderboard();
+        setLeaderboardTab(btn.dataset.tab);
     });
 });
 
