@@ -6,6 +6,7 @@ const PLAYER_COLORS = ['#3b82f6', '#22c55e', '#facc15', '#ef4444'];
 const ROUND_THRESHOLDS = { 301: 8, 501: 12, 701: 16 };
 const BOARD_RADIUS_SVG = 235;
 const BOARD_RADIUS_CM = 22.5;
+const SCORING_RADIUS_SVG = 186; // vnější okraj Double prstence
 
 // Klíče pro dvě oddělené tabulky v localStorage
 const STORAGE_KEY_PLAYERS = 'darts_db_players';
@@ -218,6 +219,7 @@ function renderPlayerInputs() {
         };
         select.addEventListener('change', () => {
             syncVisibility();
+            syncPlayerSelectOptions();
             if (select.value === '__new__') input.focus();
         });
         syncVisibility();
@@ -227,6 +229,31 @@ function renderPlayerInputs() {
         row.appendChild(dot);
         row.appendChild(combo);
         playerNamesDiv.appendChild(row);
+    }
+    syncPlayerSelectOptions();
+}
+
+function syncPlayerSelectOptions() {
+    const count = parseInt(playerCountSelect.value, 10);
+    const selectedIds = new Set();
+
+    for (let i = 0; i < count; i++) {
+        const sel = document.getElementById(`player-select-${i}`);
+        if (sel && sel.value !== '__new__') {
+            selectedIds.add(sel.value);
+        }
+    }
+
+    for (let i = 0; i < count; i++) {
+        const sel = document.getElementById(`player-select-${i}`);
+        if (!sel) continue;
+        Array.from(sel.options).forEach(opt => {
+            if (opt.value === '__new__') {
+                opt.disabled = false;
+            } else {
+                opt.disabled = selectedIds.has(opt.value) && sel.value !== opt.value;
+            }
+        });
     }
 }
 
@@ -290,7 +317,7 @@ function renderLeaderboard() {
       <div class="record-sub">${topTriples && topTriples.t20t19 > 0 ? `${topTriples.t20}× T20 • ${topTriples.t19}× T19` : 'Zatím nic'}</div>
     </div>
     <div class="record-card">
-      <div class="record-title">🧱 Nejvíc zdí (vedle)</div>
+      <div class="record-title">🧱 Nejvíc zdí</div>
       <div class="record-player">${topMisses && topMisses.misses > 0 ? escapeHtml(topMisses.name) : '—'}</div>
       <div class="record-value">${topMisses && topMisses.misses > 0 ? `${topMisses.misses}×` : '0×'}</div>
       <div class="record-sub">Hodů za 0 bodů</div>
@@ -498,24 +525,15 @@ function buildDartboard() {
     boardLayer.appendChild(innerBull);
 }
 
-svg.addEventListener('mousemove', (e) => {
-    if (state.phase !== 'bulls' || state.winner) return;
-    const pt = getSvgPoint(e);
-    const dist = svgDistToCm(pt.x, pt.y);
-    const player = state.players[state.currentPlayerIndex];
-    hoverInfo.textContent = `${player.name}: klikni místo zásahu (~${dist.toFixed(1)} cm od středu)`;
-});
-
-svg.addEventListener('mouseleave', () => {
-    if (state.phase === 'bulls' && !state.winner) {
-        hoverInfo.textContent = `Středy – na řadě: ${state.players[state.currentPlayerIndex].name}`;
-    }
-});
-
 svg.addEventListener('click', (e) => {
-    if (state.phase !== 'bulls' || state.winner) return;
-    const pt = getSvgPoint(e);
-    handleBullsThrow(pt.x, pt.y);
+    if (state.winner) return;
+
+    if (state.phase === 'bulls') {
+        const pt = getSvgPoint(e);
+        handleBullsThrow(pt.x, pt.y);
+    } else if (state.phase === 'normal' && e.target === svg) {
+        handleThrow(0, '0', false, true); // Kliknutí až za černým okrajem = zeď
+    }
 });
 
 function renderBullsDarts() {
@@ -568,7 +586,7 @@ function renderBullsDarts() {
         let lx = t.x + Math.cos(rad) * (arrowLen * 0.58);
         let ly = t.y + Math.sin(rad) * (arrowLen * 0.58) - 20;
 
-        const labelText = `${t.distCm.toFixed(1)} cm`;
+        const labelText = t.isMiss ? 'Mimo' : `${t.distCm.toFixed(1)} cm`;
         const boxW = Math.max(72, labelText.length * 8.5 + 24);
         const boxH = 26;
 
@@ -647,34 +665,39 @@ document.getElementById('start-btn').addEventListener('click', () => {
     const count = parseInt(playerCountSelect.value, 10);
     const doubleOut = document.getElementById('double-out').checked;
 
-    const chosenPlayers = [];
-    const usedIds = new Set();
+    const pendingPlayers = [];
+    const usedKeys = new Set();
 
     for (let i = 0; i < count; i++) {
         const sel = document.getElementById(`player-select-${i}`);
         const inp = document.getElementById(`player-input-${i}`);
-        let playerObj;
+
+        let name;
+        let existing = null;
 
         if (sel.value === '__new__') {
-            const name = inp.value.trim() || `Hráč ${i + 1}`;
-            playerObj = getOrCreatePlayer(name);
+            name = inp.value.trim() || `Hráč ${i + 1}`;
+            existing = playersTable.find(p => p.name.toLowerCase() === name.toLowerCase()) || null;
         } else {
-            playerObj = playersTable.find(p => p.id === sel.value);
-            if (!playerObj) playerObj = getOrCreatePlayer(`Hráč ${i + 1}`);
+            existing = playersTable.find(p => p.id === sel.value) || null;
+            name = existing ? existing.name : `Hráč ${i + 1}`;
         }
 
-        if (usedIds.has(playerObj.id)) {
-            setupError.textContent = `Hráč "${playerObj.name}" je vybrán vícekrát. Zvol prosím různé hráče.`;
+        const key = existing ? existing.id : `new:${name.toLowerCase()}`;
+        if (usedKeys.has(key)) {
+            setupError.textContent = `Hráč "${name}" je vybrán vícekrát. Zvol prosím různé hráče.`;
             return;
         }
-        usedIds.add(playerObj.id);
-        chosenPlayers.push(playerObj);
+
+        usedKeys.add(key);
+        pendingPlayers.push({ existing, name });
     }
 
+    const chosenPlayers = pendingPlayers.map(item => item.existing || getOrCreatePlayer(item.name));
     startGame(startScore, doubleOut, chosenPlayers);
 });
 
-function handleThrow(points, label, isDouble) {
+function handleThrow(points, label, isDouble, isWall = false) {
     if (state.winner || state.phase !== 'normal') return;
 
     historyStack.push(JSON.parse(JSON.stringify(state)));
@@ -689,7 +712,7 @@ function handleThrow(points, label, isDouble) {
     // Průběžné statistiky hodu
     if (label === 'T20') player.matchStats.t20 += 1;
     if (label === 'T19') player.matchStats.t19 += 1;
-    if (points === 0) player.matchStats.misses += 1;
+    if (isWall) player.matchStats.misses += 1;
 
     // Do průměru počítáme jen šipky hozené při skóre >= 40
     if (scoreBeforeThrow >= 40) {
@@ -778,10 +801,18 @@ function startBullsPhase() {
 function handleBullsThrow(x, y) {
     historyStack.push(JSON.parse(JSON.stringify(state)));
 
+    const distSvg = Math.hypot(x, y);
     const distCm = svgDistToCm(x, y);
+    const isMiss = distSvg > SCORING_RADIUS_SVG; // Mimo bodovanou plochu (černý okraj i dál)
+    const isWall = distSvg > BOARD_RADIUS_SVG;   // Zeď až za černou hranicí terče
+
+    if (isWall) {
+        state.players[state.currentPlayerIndex].matchStats.misses += 1;
+    }
+
     state.bullsThrows.push({
         playerIndex: state.currentPlayerIndex,
-        x, y, distCm
+        x, y, distCm, isMiss
     });
 
     if (state.currentPlayerIndex < state.players.length - 1) {
@@ -791,7 +822,9 @@ function handleBullsThrow(x, y) {
         const best = sorted[0];
         const winnerPlayer = state.players[best.playerIndex];
         state.winner = winnerPlayer.name;
-        state.statusMessage = `🏆 ${winnerPlayer.name} vyhrává Středy (${best.distCm.toFixed(1)} cm od středu)!`;
+        state.statusMessage = best.isMiss
+            ? `🏆 ${winnerPlayer.name} vyhrává Středy (všichni mimo, nejblíže středu)!`
+            : `🏆 ${winnerPlayer.name} vyhrává Středy (${best.distCm.toFixed(1)} cm od středu)!`;
         state.statusType = 'win';
         commitMatchToDb(winnerPlayer.id);
     }
@@ -821,7 +854,7 @@ bullsBtn.addEventListener('click', () => {
     renderGame();
 });
 
-missBtn.addEventListener('click', () => handleThrow(0, '0', false));
+missBtn.addEventListener('click', () => handleThrow(0, '0', false, true));
 
 function undoLastAction() {
     if (historyStack.length === 0) return;
@@ -949,7 +982,7 @@ function renderGame() {
             : '0.0';
 
         const rightValue = state.phase === 'bulls'
-            ? (bullsThrow ? `${bullsThrow.distCm.toFixed(1)} cm` : '—')
+            ? (bullsThrow ? (bullsThrow.isMiss ? 'Mimo' : `${bullsThrow.distCm.toFixed(1)} cm`) : '—')
             : p.score;
 
         const card = document.createElement('div');

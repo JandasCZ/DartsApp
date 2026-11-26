@@ -756,3 +756,7 @@ svg#dartboard.bulls-mode .segment {
         grid-template-columns: 1fr;
     }
 }
+
+select option:disabled {
+    color: #6b7280;
+}
