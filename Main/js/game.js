@@ -375,6 +375,66 @@ function returnToMenu() {
     renderLeaderboard();
 }
 
+function getCheckoutSuggestion(score, dartsLeft, doubleOut) {
+    if (score <= 0 || dartsLeft <= 0) return null;
+    if (doubleOut && (score > 170 || score === 1)) return null;
+    if (!doubleOut && score > 180) return null;
+
+    // Preferované zavírací hody (u Double Out jen doubly + Bull)
+    const finishDarts = [];
+    if (doubleOut) {
+        const preferredDoubles = [20, 16, 8, 10, 12, 4, 18, 14, 6, 2, 19, 17, 15, 13, 11, 9, 7, 5, 3, 1];
+        preferredDoubles.forEach(n => finishDarts.push({ label: `D${n}`, val: n * 2 }));
+        finishDarts.push({ label: 'BULL', val: 50 });
+    } else {
+        for (let n = 20; n >= 1; n--) finishDarts.push({ label: `${n}`, val: n });
+        finishDarts.push({ label: '25', val: 25 }, { label: 'BULL', val: 50 });
+        for (let n = 20; n >= 1; n--) finishDarts.push({ label: `D${n}`, val: n * 2 });
+        for (let n = 20; n >= 1; n--) finishDarts.push({ label: `T${n}`, val: n * 3 });
+    }
+
+    // Mapa pro rychlé dohledání posledního hodu
+    const finishMap = new Map();
+    finishDarts.forEach(d => {
+        if (!finishMap.has(d.val)) finishMap.set(d.val, d.label);
+    });
+
+    // Přípravné hody (nejdřív singly pro čisté 2-šipkové zavření, pak triply a středy)
+    const setupDarts = [];
+    for (let n = 20; n >= 1; n--) setupDarts.push({ label: `${n}`, val: n });
+    for (let n = 20; n >= 1; n--) setupDarts.push({ label: `T${n}`, val: n * 3 });
+    setupDarts.push({ label: 'BULL', val: 50 }, { label: '25', val: 25 });
+    for (let n = 20; n >= 1; n--) setupDarts.push({ label: `D${n}`, val: n * 2 });
+
+    // 1 šipka
+    if (finishMap.has(score)) {
+        return [finishMap.get(score)];
+    }
+    if (dartsLeft < 2) return null;
+
+    // 2 šipky
+    for (const d1 of setupDarts) {
+        const rem = score - d1.val;
+        if (rem > 0 && finishMap.has(rem)) {
+            return [d1.label, finishMap.get(rem)];
+        }
+    }
+    if (dartsLeft < 3) return null;
+
+    // 3 šipky
+    for (const d1 of setupDarts) {
+        if (d1.val >= score) continue;
+        for (const d2 of setupDarts) {
+            const rem = score - d1.val - d2.val;
+            if (rem > 0 && finishMap.has(rem)) {
+                return [d1.label, d2.label, finishMap.get(rem)];
+            }
+        }
+    }
+
+    return null;
+}
+
 document.getElementById('menu-btn').addEventListener('click', returnToMenu);
 document.getElementById('new-game-btn').addEventListener('click', returnToMenu);
 
@@ -459,6 +519,19 @@ function renderGame() {
 
     state.players.forEach((p, idx) => {
         const isCurrent = idx === state.currentPlayerIndex && !state.winner;
+        const dartsLeft = isCurrent
+            ? 3 - (state.currentTurn ? state.currentTurn.length : 0)
+            : 3;
+        const checkout = (!state.winner && state.phase === 'normal' && state.gameMode !== 'cricket')
+            ? getCheckoutSuggestion(p.score, dartsLeft, state.doubleOut)
+            : null;
+
+        const checkoutHtml = checkout
+            ? `<span class="checkout-hints">${checkout.map((d, i) =>
+                `<span class="checkout-badge${i === checkout.length - 1 ? ' finish' : ''}">${d}</span>`
+            ).join('')}</span>`
+            : '';
+
         const bullsThrow = state.bullsThrows.find(t => t.playerIndex === idx);
         const avg = p.dartsThrown > 0
             ? (((state.startScore - p.score) / p.dartsThrown) * 3).toFixed(1)
@@ -467,7 +540,7 @@ function renderGame() {
             ? ((p.matchStats.cricketMarksHit / p.dartsThrown) * 100).toFixed(0)
             : '0';
         const statLabel = state.gameMode === 'cricket'
-            ? `Efektivita: ${cricketEff} %`
+            ? `Přesnost: ${cricketEff} %`
             : `Průměr: ${avg}`;
 
         const medals = ['🥇', '🥈', '🥉'];
@@ -481,7 +554,9 @@ function renderGame() {
       <div>
         <div class="player-name-row">
           <span class="color-dot" style="background: ${p.color};"></span>
+          <div class="player-name-row">
           <span class="player-name">${escapeHtml(p.name)}</span>
+        </div>
         </div>
         <div class="player-meta">
           ${state.phase === 'bulls'
@@ -492,7 +567,20 @@ function renderGame() {
       </div>
       <div class="player-score${state.phase === 'bulls' ? ' dist' : ''}">${rightValue}</div>
     `;
-        grid.appendChild(card);
+        const row = document.createElement('div');
+        row.className = 'player-row';
+        row.appendChild(card);
+
+        if (checkout) {
+            const checkoutBox = document.createElement('div');
+            checkoutBox.className = `checkout-side-box${isCurrent ? ' active' : ''}`;
+            checkoutBox.innerHTML = checkout.map((d, i) =>
+                `<span class="checkout-badge${i === checkout.length - 1 ? ' finish' : ''}">${d}</span>`
+            ).join('');
+            row.appendChild(checkoutBox);
+        }
+
+        grid.appendChild(row);
     });
 
     renderBullsDarts();

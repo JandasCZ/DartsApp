@@ -1020,6 +1020,55 @@ select option:disabled {
     background: transparent;
 }
 
+.player-row {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.player-row .player-card {
+    flex: 1;
+    min-width: 0;
+}
+
+.checkout-side-box {
+    display: flex;
+    flex-direction: column; /* Změň na 'row', pokud chceš štítky vedle sebe */
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    border-radius: 12px;
+    background: #1b2028;
+    border: 1px solid #2b3240;
+    flex-shrink: 0;
+    min-width: 60px;
+}
+
+.checkout-side-box.active {
+    border-color: rgba(245, 158, 11, 0.55);
+    background: rgba(245, 158, 11, 0.06);
+}
+
+.checkout-badge {
+    width: 100%;
+    text-align: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid #3b4454;
+    color: var(--text);
+    letter-spacing: 0.3px;
+}
+
+.checkout-badge.finish {
+    background: rgba(245, 158, 11, 0.16);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
 @media (max-width: 540px) {
     .records-grid {
         grid-template-columns: 1fr;
