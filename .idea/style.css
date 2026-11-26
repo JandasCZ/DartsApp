@@ -828,6 +828,25 @@ select option:disabled {
     color: #6b7280;
 }
 
+.btn-end-early {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: #111;
+    width: 100%;
+    padding: 11px;
+    font-size: 1rem;
+    display: none;
+}
+
+.player-card.finished {
+    border-color: var(--success);
+    opacity: 0.8;
+}
+
+.player-card.finished .player-score {
+    font-size: 1.45rem;
+    color: var(--success);
+}
+
 @media (max-width: 540px) {
     .records-grid {
         grid-template-columns: 1fr;

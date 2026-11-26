@@ -182,6 +182,7 @@ const winTitle = document.getElementById('win-title');
 const winSubtitle = document.getElementById('win-subtitle');
 const minimizeModalBtn = document.getElementById('minimize-modal-btn');
 const restoreModalBtn = document.getElementById('restore-modal-btn');
+const endGameBtn = document.getElementById('end-game-btn');
 
 function createEl(tag, attrs = {}) {
     const el = document.createElementNS(NS, tag);
@@ -299,12 +300,14 @@ function renderLeaderboard() {
         };
         const sPoints = s.scoringPoints || 0;
         const sDarts = s.scoringDarts || 0;
+        const avgNum = sDarts > 0 ? (sPoints / sDarts) * 3 : 0;
         return {
             id: p.id,
             name: p.name,
             games: s.games || 0,
             wins: s.wins || 0,
-            avg: sDarts > 0 ? ((sPoints / sDarts) * 3).toFixed(1) : '0.0',
+            avg: avgNum.toFixed(1),
+            avgNum,
             t20: s.t20 || 0,
             t19: s.t19 || 0,
             t20t19: (s.t20 || 0) + (s.t19 || 0),
@@ -314,7 +317,9 @@ function renderLeaderboard() {
     });
 
     // 1) Pedestály – Nejvíc výher (pořadí zleva: 2., 1., 3.)
-    const byWins = [...joined].sort((a, b) => b.wins - a.wins || b.bestTurn - a.bestTurn);
+    const byWins = [...joined].sort((a, b) =>
+        b.wins - a.wins || b.avgNum - a.avgNum || b.bestTurn - a.bestTurn
+    );
     const podiumOrder = [
         { rank: 2, medal: '🥈', data: byWins[1] },
         { rank: 1, medal: '🥇', data: byWins[0] },
@@ -694,6 +699,7 @@ function startGame(startScore, doubleOut, selectedPlayers) {
         score: startScore,
         dartsThrown: 0,
         lastTurn: [],
+        finishedRank: null,
         matchStats: { t20: 0, t19: 0, misses: 0, bestTurn: 0, scoringPoints: 0, scoringDarts: 0 }
     }));
 
@@ -704,6 +710,7 @@ function startGame(startScore, doubleOut, selectedPlayers) {
         roundNumber: 1,
         bullsPending: false,
         players,
+        finishedOrder: [],
         currentPlayerIndex: 0,
         currentTurn: [],
         currentTurnPoints: 0,
@@ -806,11 +813,28 @@ function handleThrow(points, label, isDouble, isWall = false) {
             player.matchStats.bestTurn = state.currentTurnPoints;
         }
         player.lastTurn = [...state.currentTurn];
-        state.winner = player.name;
+
+        // Zápis pořadí dohrání
+        player.finishedRank = state.finishedOrder.length + 1;
+        state.finishedOrder.push(player.id);
         state.bullsPending = false;
-        state.statusMessage = `🏆 ${player.name} vyhrál za ${player.dartsThrown} šipek!`;
-        state.statusType = 'win';
-        commitMatchToDb(player.id);
+
+        const remainingPlayers = state.players.filter(p => p.finishedRank === null);
+
+        // Konec hry: hraje 1–2 hráči, nebo už zbývá jen poslední nedohraný
+        if (remainingPlayers.length <= 1) {
+            const firstPlace = state.players.find(p => p.id === state.finishedOrder[0]);
+            state.winner = firstPlace.name;
+            state.statusMessage = `🏆 ${firstPlace.name} vyhrál za ${firstPlace.dartsThrown} šipek!`;
+            state.statusType = 'win';
+            commitMatchToDb(firstPlace.id);
+        } else {
+            const medals = ['🥇', '🥈', '🥉'];
+            const medal = medals[player.finishedRank - 1] || '🏅';
+            state.statusMessage = `${medal} ${player.name} zavřel na ${player.finishedRank}. místě (${player.dartsThrown} šipek)! Hra pokračuje.`;
+            state.statusType = 'info';
+            nextPlayer();
+        }
     } else {
         player.score = newScore;
         state.currentTurn.push(label);
@@ -830,9 +854,20 @@ function handleThrow(points, label, isDouble, isWall = false) {
 }
 
 function nextPlayer() {
-    const isEndOfRound = state.currentPlayerIndex === state.players.length - 1;
+    const total = state.players.length;
+    let nextIdx = state.currentPlayerIndex;
 
-    if (isEndOfRound && state.bullsPending) {
+    for (let step = 1; step <= total; step++) {
+        const candidate = (state.currentPlayerIndex + step) % total;
+        if (state.players[candidate].finishedRank === null) {
+            nextIdx = candidate;
+            break;
+        }
+    }
+
+    const isEndOfRound = nextIdx <= state.currentPlayerIndex;
+
+    if (isEndOfRound && state.bullsPending && state.finishedOrder.length === 0) {
         startBullsPhase();
         return;
     }
@@ -841,7 +876,7 @@ function nextPlayer() {
         state.roundNumber += 1;
     }
 
-    state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
+    state.currentPlayerIndex = nextIdx;
     state.currentTurn = [];
     state.currentTurnPoints = 0;
     state.turnScoringPoints = 0;
@@ -918,6 +953,18 @@ bullsBtn.addEventListener('click', () => {
     renderGame();
 });
 
+endGameBtn.addEventListener('click', () => {
+    if (state.winner || state.finishedOrder.length === 0) return;
+
+    historyStack.push(JSON.parse(JSON.stringify(state)));
+    const firstPlace = state.players.find(p => p.id === state.finishedOrder[0]);
+    state.winner = firstPlace.name;
+    state.statusMessage = `🏆 ${firstPlace.name} vyhrál za ${firstPlace.dartsThrown} šipek!`;
+    state.statusType = 'win';
+    commitMatchToDb(firstPlace.id);
+    renderGame();
+});
+
 missBtn.addEventListener('click', () => handleThrow(0, '0', false, true));
 
 function undoLastAction() {
@@ -978,6 +1025,7 @@ function renderGame() {
         svg.classList.add('bulls-mode');
         missBtn.style.display = 'none';
         bullsBtn.style.display = 'none';
+        endGameBtn.style.display = 'none';
         hoverInfo.textContent = state.winner
             ? 'Středy dokončeny!'
             : `Středy – na řadě: ${state.players[state.currentPlayerIndex].name}`;
@@ -986,7 +1034,8 @@ function renderGame() {
         missBtn.style.display = 'block';
         hoverInfo.textContent = 'Klikni na plošku terče';
 
-        if (completedRounds >= threshold && !state.winner) {
+        endGameBtn.style.display = (state.finishedOrder.length > 0 && !state.winner) ? 'block' : 'none';
+        if (completedRounds >= threshold && !state.winner && state.finishedOrder.length === 0) {
             bullsBtn.style.display = 'block';
             if (state.bullsPending) {
                 bullsBtn.classList.add('pending');
@@ -1045,12 +1094,13 @@ function renderGame() {
             ? (((state.startScore - p.score) / p.dartsThrown) * 3).toFixed(1)
             : '0.0';
 
+        const medals = ['🥇', '🥈', '🥉'];
         const rightValue = state.phase === 'bulls'
             ? (bullsThrow ? (bullsThrow.isMiss ? 'Mimo' : `${bullsThrow.distCm.toFixed(1)} cm`) : '—')
-            : p.score;
+            : (p.finishedRank ? `${medals[p.finishedRank - 1] || '🏅'} ${p.finishedRank}.` : p.score);
 
         const card = document.createElement('div');
-        card.className = `player-card${isCurrent ? ' active' : ''}`;
+        card.className = `player-card${isCurrent ? ' active' : ''}${p.finishedRank ? ' finished' : ''}`;
         card.innerHTML = `
       <div>
         <div class="player-name-row">
