@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Počítadlo šipek</title>
+  <style>
+    :root {
+      --bg: #121417;
+      --panel: #1b1f24;
+      --panel-light: #252b33;
+      --accent: #f59e0b;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --danger: #ef4444;
+      --success: #22c55e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+    }
+
+    /* Setup obrazovka */
+    #setup-screen {
+      background: var(--panel);
+      padding: 28px;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 460px;
+      margin-top: 40px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 1.6rem;
+      color: var(--accent);
+    }
+
+    .form-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-size: 0.9rem; color: var(--muted); }
+
+    select, input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #333b46;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 1rem;
+    }
+
+    .player-inputs { display: flex; flex-direction: column; gap: 8px; }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 16px 0;
+      cursor: pointer;
+    }
+    .checkbox-row input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: transform 0.08s, filter 0.15s;
+    }
+    button:active { transform: scale(0.97); }
+    button:hover { filter: brightness(1.1); }
+
+    .btn-primary { background: var(--accent); color: #111; width: 100%; padding: 12px; font-size: 1.05rem; }
+    .btn-secondary { background: var(--panel-light); color: var(--text); }
+    .btn-danger { background: var(--danger); color: #fff; }
+
+    /* Herní obrazovka */
+    #game-screen {
+      display: none;
+      width: 100%;
+      max-width: 1120px;
+      gap: 24px;
+      align-items: flex-start;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .board-container {
+      flex: 1 1 460px;
+      max-width: 560px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: var(--panel);
+      padding: 18px;
+      border-radius: 16px;
+    }
+
+    #hover-info {
+      height: 28px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    svg#dartboard {
+      width: 100%;
+      max-width: 500px;
+      height: auto;
+      user-select: none;
+      filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.5));
+    }
+
+    .segment {
+      cursor: pointer;
+      transition: filter 0.1s;
+      stroke: #9ca3af;
+      stroke-width: 0.8;
+    }
+    .segment:hover {
+      filter: brightness(1.45);
+      stroke: #fff;
+      stroke-width: 1.5;
+    }
+
+    .board-controls {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      margin-top: 14px;
+    }
+    .board-controls button { flex: 1; }
+
+    /* Pravý panel se skóre */
+    .sidebar {
+      flex: 1 1 320px;
+      max-width: 460px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--panel);
+      padding: 12px 16px;
+      border-radius: 12px;
+    }
+
+    .mode-badge {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .mode-badge strong { color: var(--accent); }
+
+    .turn-box {
+      background: var(--panel);
+      padding: 14px 16px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .turn-box .label { font-size: 0.85rem; color: var(--muted); margin-bottom: 8px; }
+    .dart-slots {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    .dart-slot {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid #333b46;
+      border-radius: 8px;
+      padding: 10px 4px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .dart-slot.filled { border-color: var(--accent); color: var(--accent); }
+
+    #status-banner {
+      display: none;
+      padding: 12px;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+    #status-banner.bust { display: block; background: rgba(239, 68, 68, 0.2); border: 1px solid var(--danger); color: #fca5a5; }
+    #status-banner.win { display: block; background: rgba(34, 197, 94, 0.2); border: 1px solid var(--success); color: #86efac; }
+
+    .players-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .player-card {
+      background: var(--panel);
+      border: 2px solid transparent;
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .player-card.active {
+      border-color: var(--accent);
+      background: #232830;
+    }
+    .player-name { font-size: 1.1rem; font-weight: 700; }
+    .player-meta { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+    .player-score { font-size: 2.3rem; font-weight: 800; line-height: 1; }
+    .player-card.active .player-score { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <!-- NASTAVENÍ HRY -->
+  <div id="setup-screen">
+    <h1>🎯 Počítadlo šipek</h1>
+
+    <div class="form-group">
+      <label for="game-mode">Režim hry</label>
+      <select id="game-mode">
+        <option value="501" selected>501</option>
+        <option value="301">301</option>
+        <option value="701">701</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="player-count">Počet hráčů</label>
+      <select id="player-count">
+        <option value="1">1 hráč</option>
+        <option value="2" selected>2 hráči</option>
+        <option value="3">3 hráči</option>
+        <option value="4">4 hráči</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Jména hráčů</label>
+      <div id="player-names" class="player-inputs"></div>
+    </div>
+
+    <label class="checkbox-row">
+      <input type="checkbox" id="double-out" />
+      <span>Double Out (zavírání dvojnásobkem nebo středem)</span>
+    </label>
+
+    <button class="btn-primary" id="start-btn">Spustit hru</button>
+  </div>
+
+  <!-- HERNÍ OBRAZOVKA -->
+  <div id="game-screen">
+    <div class="board-container">
+      <div id="hover-info">Klikni na plošku terče</div>
+      <svg id="dartboard" viewBox="-250 -250 500 500"></svg>
+      <div class="board-controls">
+        <button class="btn-secondary" id="miss-btn">Vedle (0)</button>
+        <button class="btn-secondary" id="undo-btn">↩ Zpět</button>
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <div class="top-bar">
+        <div class="mode-badge" id="mode-display"></div>
+        <button class="btn-danger" id="new-game-btn" style="padding: 6px 12px; font-size: 0.85rem;">Nová hra</button>
+      </div>
+
+      <div id="status-banner"></div>
+
+      <div class="turn-box">
+        <div class="label" id="turn-label">Aktuální kolo</div>
+        <div class="dart-slots">
+          <div class="dart-slot" id="slot-0">-</div>
+          <div class="dart-slot" id="slot-1">-</div>
+          <div class="dart-slot" id="slot-2">-</div>
+        </div>
+      </div>
+
+      <div class="players-grid" id="players-grid"></div>
+    </div>
+  </div>
+
+  <script>
+    // Pořadí čísel na terči po směru hodinových ručiček od 12 hodin
+    const BOARD_NUMBERS = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
+
+    let state = {
+      startScore: 501,
+      doubleOut: false,
+      players: [],
+      currentPlayerIndex: 0,
+      currentTurn: [],
+      turnStartScore: 501,
+      winner: null,
+      statusMessage: null,
+      statusType: null
+    };
+
+    let historyStack = [];
+
+    // DOM prvky
+    const setupScreen = document.getElementById('setup-screen');
+    const gameScreen = document.getElementById('game-screen');
+    const playerCountSelect = document.getElementById('player-count');
+    const playerNamesDiv = document.getElementById('player-names');
+    const hoverInfo = document.getElementById('hover-info');
+    const svg = document.getElementById('dartboard');
+
+    // Dynamická pole pro jména hráčů
+    function renderPlayerInputs() {
+      const count = parseInt(playerCountSelect.value, 10);
+      playerNamesDiv.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = `Hráč ${i + 1}`;
+        input.value = `Hráč ${i + 1}`;
+        input.id = `player-input-${i}`;
+        playerNamesDiv.appendChild(input);
+      }
+    }
+    playerCountSelect.addEventListener('change', renderPlayerInputs);
+    renderPlayerInputs();
+
+    // Vykreslení klikatelného SVG terče
+    function buildDartboard() {
+      const NS = 'http://www.w3.org/2000/svg';
+      svg.innerHTML = '';
+
+      function createEl(tag, attrs) {
+        const el = document.createElementNS(NS, tag);
+        for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+        return el;
+      }
+
+      // Vnější černý kruh (Miss = 0)
+      const outerRing = createEl('circle', {
+        cx: 0, cy: 0, r: 235,
+        fill: '#111317',
+        stroke: '#333b46',
+        'stroke-width': 3,
+        class: 'segment'
+      });
+      outerRing.addEventListener('mouseenter', () => hoverInfo.textContent = 'Vedle (0)');
+      outerRing.addEventListener('mouseleave', () => hoverInfo.textContent = 'Klikni na plošku terče');
+      outerRing.addEventListener('click', () => handleThrow(0, '0', false));
+      svg.appendChild(outerRing);
+
+      // Pomocná funkce pro výseč mezikruží
+      function sectorPath(r1, r2, startDeg, endDeg) {
+        const rad = Math.PI / 180;
+        const a1 = startDeg * rad;
+        const a2 = endDeg * rad;
+        const x1 = r1 * Math.cos(a1), y1 = r1 * Math.sin(a1);
+        const x2 = r2 * Math.cos(a1), y2 = r2 * Math.sin(a1);
+        const x3 = r2 * Math.cos(a2), y3 = r2 * Math.sin(a2);
+        const x4 = r1 * Math.cos(a2), y4 = r1 * Math.sin(a2);
+        return `M ${x1} ${y1} L ${x2} ${y2} A ${r2} ${r2} 0 0 1 ${x3} ${y3} L ${x4} ${y4} A ${r1} ${r1} 0 0 0 ${x1} ${y1} Z`;
+      }
+
+      // Poloměry prstenců (mírně zvětšené double/triple pro pohodlnější klikání myší)
+      const rings = [
+        { r1: 28,  r2: 95,  mult: 1, prefix: '',  isDouble: false }, // Vnitřní single
+        { r1: 95,  r2: 113, mult: 3, prefix: 'T', isDouble: false }, // Triple
+        { r1: 113, r2: 168, mult: 1, prefix: '',  isDouble: false }, // Vnější single
+        { r1: 168, r2: 186, mult: 2, prefix: 'D', isDouble: true  }  // Double
+      ];
+
+      BOARD_NUMBERS.forEach((num, i) => {
+        const centerDeg = -90 + i * 18;
+        const startDeg = centerDeg - 9;
+        const endDeg = centerDeg + 9;
+        const isEven = i % 2 === 0;
+
+        rings.forEach(ring => {
+          const fill = ring.mult === 1
+            ? (isEven ? '#16181d' : '#f3e5c0')
+            : (isEven ? '#dc2626' : '#16a34a');
+
+          const points = num * ring.mult;
+          const label = `${ring.prefix}${num}`;
+
+          const path = createEl('path', {
+            d: sectorPath(ring.r1, ring.r2, startDeg, endDeg),
+            fill,
+            class: 'segment'
+          });
+
+          path.addEventListener('mouseenter', () => {
+            hoverInfo.textContent = `${label} (${points} b.)`;
+          });
+          path.addEventListener('mouseleave', () => {
+            hoverInfo.textContent = 'Klikni na plošku terče';
+          });
+          path.addEventListener('click', (e) => {
+            e.stopPropagation();
+            handleThrow(points, label, ring.isDouble);
+          });
+
+          svg.appendChild(path);
+        });
+
+        // Číslo kolem terče
+        const rad = centerDeg * Math.PI / 180;
+        const text = createEl('text', {
+          x: 211 * Math.cos(rad),
+          y: 211 * Math.sin(rad),
+          fill: '#f3f4f6',
+          'font-size': '19',
+          'font-weight': '700',
+          'text-anchor': 'middle',
+          'dominant-baseline': 'central',
+          style: 'pointer-events: none;'
+        });
+        text.textContent = num;
+        svg.appendChild(text);
+      });
+
+      // Vnější střed (25)
+      const outerBull = createEl('circle', {
+        cx: 0, cy: 0, r: 28,
+        fill: '#16a34a',
+        class: 'segment'
+      });
+      outerBull.addEventListener('mouseenter', () => hoverInfo.textContent = '25 (Vnější střed)');
+      outerBull.addEventListener('mouseleave', () => hoverInfo.textContent = 'Klikni na plošku terče');
+      outerBull.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handleThrow(25, '25', false);
+      });
+      svg.appendChild(outerBull);
+
+      // Bullseye (50 - počítá se jako Double)
+      const innerBull = createEl('circle', {
+        cx: 0, cy: 0, r: 12,
+        fill: '#dc2626',
+        class: 'segment'
+      });
+      innerBull.addEventListener('mouseenter', () => hoverInfo.textContent = 'BULL (50 b.)');
+      innerBull.addEventListener('mouseleave', () => hoverInfo.textContent = 'Klikni na plošku terče');
+      innerBull.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handleThrow(50, 'BULL', true);
+      });
+      svg.appendChild(innerBull);
+    }
+
+    // Spuštění hry
+    document.getElementById('start-btn').addEventListener('click', () => {
+      const startScore = parseInt(document.getElementById('game-mode').value, 10);
+      const count = parseInt(playerCountSelect.value, 10);
+      const doubleOut = document.getElementById('double-out').checked;
+
+      const players = [];
+      for (let i = 0; i < count; i++) {
+        const name = document.getElementById(`player-input-${i}`).value.trim() || `Hráč ${i + 1}`;
+        players.push({
+          name,
+          score: startScore,
+          dartsThrown: 0,
+          lastTurn: []
+        });
+      }
+
+      state = {
+        startScore,
+        doubleOut,
+        players,
+        currentPlayerIndex: 0,
+        currentTurn: [],
+        turnStartScore: startScore,
+        winner: null,
+        statusMessage: null,
+        statusType: null
+      };
+      historyStack = [];
+
+      setupScreen.style.display = 'none';
+      gameScreen.style.display = 'flex';
+      buildDartboard();
+      renderGame();
+    });
+
+    // Zpracování hodu
+    function handleThrow(points, label, isDouble) {
+      if (state.winner) return;
+
+      // Uložit stav pro funkci Zpět
+      historyStack.push(JSON.parse(JSON.stringify(state)));
+
+      state.statusMessage = null;
+      state.statusType = null;
+
+      const player = state.players[state.currentPlayerIndex];
+      const newScore = player.score - points;
+      player.dartsThrown += 1;
+
+      const isBust =
+        newScore < 0 ||
+        (state.doubleOut && newScore === 1) ||
+        (state.doubleOut && newScore === 0 && !isDouble);
+
+      if (isBust) {
+        player.score = state.turnStartScore;
+        player.lastTurn = [...state.currentTurn, `${label} (BUST)`];
+        state.statusMessage = `💥 ${player.name} přehodil (BUST)! Skóre se vrací na ${state.turnStartScore}.`;
+        state.statusType = 'bust';
+        nextPlayer();
+      } else if (newScore === 0) {
+        player.score = 0;
+        state.currentTurn.push(label);
+        player.lastTurn = [...state.currentTurn];
+        state.winner = player.name;
+        state.statusMessage = `🏆 ${player.name} vyhrál za ${player.dartsThrown} šipek!`;
+        state.statusType = 'win';
+      } else {
+        player.score = newScore;
+        state.currentTurn.push(label);
+        if (state.currentTurn.length === 3) {
+          player.lastTurn = [...state.currentTurn];
+          nextPlayer();
+        }
+      }
+
+      renderGame();
+    }
+
+    function nextPlayer() {
+      state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
+      state.currentTurn = [];
+      state.turnStartScore = state.players[state.currentPlayerIndex].score;
+    }
+
+    // Tlačítka Vedle, Zpět, Nová hra
+    document.getElementById('miss-btn').addEventListener('click', () => handleThrow(0, '0', false));
+
+    document.getElementById('undo-btn').addEventListener('click', () => {
+      if (historyStack.length === 0) return;
+      state = historyStack.pop();
+      renderGame();
+    });
+
+    document.getElementById('new-game-btn').addEventListener('click', () => {
+      gameScreen.style.display = 'none';
+      setupScreen.style.display = 'block';
+    });
+
+    // Překreslení tabulky a panelů
+    function renderGame() {
+      document.getElementById('mode-display').innerHTML =
+        `Režim: <strong>${state.startScore}</strong> ${state.doubleOut ? '(Double Out)' : '(Straight Out)'}`;
+
+      const banner = document.getElementById('status-banner');
+      if (state.statusMessage) {
+        banner.textContent = state.statusMessage;
+        banner.className = state.statusType;
+      } else {
+        banner.className = '';
+        banner.textContent = '';
+      }
+
+      const activePlayer = state.players[state.currentPlayerIndex];
+      document.getElementById('turn-label').textContent = state.winner
+        ? 'Konec hry'
+        : `Na řadě: ${activePlayer.name}`;
+
+      for (let i = 0; i < 3; i++) {
+        const slot = document.getElementById(`slot-${i}`);
+        if (state.currentTurn[i] !== undefined) {
+          slot.textContent = state.currentTurn[i];
+          slot.classList.add('filled');
+        } else {
+          slot.textContent = '-';
+          slot.classList.remove('filled');
+        }
+      }
+
+      const grid = document.getElementById('players-grid');
+      grid.innerHTML = '';
+
+      state.players.forEach((p, idx) => {
+        const isCurrent = idx === state.currentPlayerIndex && !state.winner;
+        const avg = p.dartsThrown > 0
+          ? (((state.startScore - p.score) / p.dartsThrown) * 3).toFixed(1)
+          : '0.0';
+
+        const card = document.createElement('div');
+        card.className = `player-card${isCurrent ? ' active' : ''}`;
+        card.innerHTML = `
+          <div>
+            <div class="player-name">${p.name}</div>
+            <div class="player-meta">
+              Průměr: ${avg} | Šipek: ${p.dartsThrown}
+              ${p.lastTurn.length ? `<br>Poslední kolo: ${p.lastTurn.join(', ')}` : ''}
+            </div>
+          </div>
+          <div class="player-score">${p.score}</div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+  </script>
+</body>
+</html>
