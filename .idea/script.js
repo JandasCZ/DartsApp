@@ -42,6 +42,12 @@ const hoverInfo = document.getElementById('hover-info');
 const svg = document.getElementById('dartboard');
 const bullsBtn = document.getElementById('bulls-btn');
 const missBtn = document.getElementById('miss-btn');
+const newGameBtn = document.getElementById('new-game-btn');
+const winModal = document.getElementById('win-modal');
+const winTitle = document.getElementById('win-title');
+const winSubtitle = document.getElementById('win-subtitle');
+const minimizeModalBtn = document.getElementById('minimize-modal-btn');
+const restoreModalBtn = document.getElementById('restore-modal-btn');
 
 function createEl(tag, attrs = {}) {
     const el = document.createElementNS(NS, tag);
@@ -359,23 +365,15 @@ function renderBullsDarts() {
     dartsLayer.appendChild(labelsGroup);
 }
 
-// Spuštění hry
-document.getElementById('start-btn').addEventListener('click', () => {
-    const startScore = parseInt(document.getElementById('game-mode').value, 10);
-    const count = parseInt(playerCountSelect.value, 10);
-    const doubleOut = document.getElementById('double-out').checked;
-
-    const players = [];
-    for (let i = 0; i < count; i++) {
-        const name = document.getElementById(`player-input-${i}`).value.trim() || `Hráč ${i + 1}`;
-        players.push({
-            name,
-            color: PLAYER_COLORS[i],
-            score: startScore,
-            dartsThrown: 0,
-            lastTurn: []
-        });
-    }
+// Spuštění / zopakování hry
+function startGame(startScore, doubleOut, playerNames) {
+    const players = playerNames.map((name, i) => ({
+        name,
+        color: PLAYER_COLORS[i],
+        score: startScore,
+        dartsThrown: 0,
+        lastTurn: []
+    }));
 
     state = {
         phase: 'normal',
@@ -398,6 +396,19 @@ document.getElementById('start-btn').addEventListener('click', () => {
     gameScreen.style.display = 'flex';
     buildDartboard();
     renderGame();
+}
+
+document.getElementById('start-btn').addEventListener('click', () => {
+    const startScore = parseInt(document.getElementById('game-mode').value, 10);
+    const count = parseInt(playerCountSelect.value, 10);
+    const doubleOut = document.getElementById('double-out').checked;
+
+    const names = [];
+    for (let i = 0; i < count; i++) {
+        names.push(document.getElementById(`player-input-${i}`).value.trim() || `Hráč ${i + 1}`);
+    }
+
+    startGame(startScore, doubleOut, names);
 });
 
 // Zpracování hodu v normální hře
@@ -528,11 +539,46 @@ document.getElementById('undo-btn').addEventListener('click', () => {
     renderGame();
 });
 
-document.getElementById('new-game-btn').addEventListener('click', () => {
+function hideModalCompletely() {
+    winModal.classList.remove('show', 'minimized');
+    restoreModalBtn.classList.remove('show');
+}
+
+minimizeModalBtn.addEventListener('click', () => {
+    winModal.classList.add('minimized');
+    restoreModalBtn.classList.add('show');
+});
+
+restoreModalBtn.addEventListener('click', () => {
+    winModal.classList.remove('minimized');
+    restoreModalBtn.classList.remove('show');
+});
+
+document.getElementById('menu-btn').addEventListener('click', () => {
+    hideModalCompletely();
     gameScreen.style.display = 'none';
     setupScreen.style.display = 'block';
 });
 
+document.getElementById('new-game-btn').addEventListener('click', () => {
+    hideModalCompletely();
+    gameScreen.style.display = 'none';
+    setupScreen.style.display = 'block';
+});
+
+function undoLastAction() {
+    if (historyStack.length === 0) return;
+    state = historyStack.pop();
+    renderGame();
+}
+
+document.getElementById('undo-btn').addEventListener('click', undoLastAction);
+document.getElementById('modal-undo-btn').addEventListener('click', undoLastAction);
+
+document.getElementById('rematch-btn').addEventListener('click', () => {
+    const names = state.players.map(p => p.name);
+    startGame(state.startScore, state.doubleOut, names);
+});
 // Překreslení celého rozhraní
 function renderGame() {
     const threshold = ROUND_THRESHOLDS[state.startScore] || 12;
@@ -638,4 +684,15 @@ function renderGame() {
     });
 
     renderBullsDarts();
+
+    if (state.winner) {
+        winTitle.textContent = `${state.winner} vyhrál!`;
+        winSubtitle.textContent = (state.statusMessage || '').replace('🏆 ', '');
+        minimizeModalBtn.textContent = state.phase === 'bulls'
+            ? '🎯 Prohlédnout středy'
+            : '👀 Prohlédnout výsledky';
+        winModal.classList.add('show');
+    } else {
+        hideModalCompletely();
+    }
 }

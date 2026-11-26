@@ -15,8 +15,8 @@
   <div class="form-group">
     <label for="game-mode">Režim hry</label>
     <select id="game-mode">
-      <option value="501" selected>501 (Středy po 12. kole)</option>
       <option value="301">301 (Středy po 8. kole)</option>
+      <option value="501" selected>501 (Středy po 12. kole)</option>
       <option value="701">701 (Středy po 16. kole)</option>
     </select>
   </div>
@@ -58,7 +58,7 @@
   <div class="sidebar">
     <div class="top-bar">
       <div class="mode-badge" id="mode-display"></div>
-      <button class="btn-danger btn-small" id="new-game-btn">Nová hra</button>
+      <button class="btn-danger btn-small" id="new-game-btn">Ukončit hru</button>
     </div>
 
     <button class="btn-bulls" id="bulls-btn">🎯 Středy?</button>
@@ -77,6 +77,26 @@
     <div class="players-grid" id="players-grid"></div>
   </div>
 </div>
+
+<!-- POPUP NA KONCI HRY -->
+<div id="win-modal" class="modal-overlay">
+  <div class="modal-card">
+    <div class="modal-icon">🏆</div>
+    <h2 id="win-title">Konec hry!</h2>
+    <p id="win-subtitle"></p>
+    <div class="modal-actions">
+      <button class="btn-primary" id="rematch-btn">🔄 Opakovat hru</button>
+      <button class="btn-secondary" id="minimize-modal-btn">🎯 Prohlédnout terč</button>
+      <button class="btn-secondary" id="menu-btn">🏠 Zpět do menu</button>
+    </div>
+    <button class="btn-link" id="modal-undo-btn">↩ Omyl, vrátit poslední hod</button>
+  </div>
+</div>
+
+<!-- MINIMALIZOVANÉ TLAČÍTKO V PRAVÉM DOLNÍM ROHU -->
+<button id="restore-modal-btn" class="restore-modal-btn">
+  <span>▲</span> Výsledky
+</button>
 
 <script src="script.js"></script>
 </body>
