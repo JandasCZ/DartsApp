@@ -1,0 +1,432 @@
+{
+  "players": [
+    {
+      "id": "p_1795680994612_uc82",
+      "name": "Hráč 1"
+    },
+    {
+      "id": "p_1795680994613_l0te",
+      "name": "Hráč 2"
+    },
+    {
+      "id": "p_1795682417791_rbnq",
+      "name": "Hráč 3"
+    }
+  ],
+  "stats": [
+    {
+      "playerId": "p_1795680994612_uc82",
+      "games": 11,
+      "wins": 6,
+      "t20": 41,
+      "t19": 5,
+      "misses": 1,
+      "bestTurn": 180,
+      "scoringPoints": 2131,
+      "scoringDarts": 86
+    },
+    {
+      "playerId": "p_1795680994613_l0te",
+      "games": 11,
+      "wins": 5,
+      "t20": 46,
+      "t19": 1,
+      "misses": 0,
+      "bestTurn": 180,
+      "scoringPoints": 2183,
+      "scoringDarts": 72
+    },
+    {
+      "playerId": "p_1795682417791_rbnq",
+      "games": 2,
+      "wins": 0,
+      "t20": 14,
+      "t19": 0,
+      "misses": 0,
+      "bestTurn": 180,
+      "scoringPoints": 390,
+      "scoringDarts": 17
+    }
+  ],
+  "cricketStats": [
+    {
+      "playerId": "p_1795680994612_uc82",
+      "games": 3,
+      "wins": 2,
+      "fastestWinDarts": 12,
+      "totalMarks": 61,
+      "totalDarts": 34,
+      "bestScore": 156
+    },
+    {
+      "playerId": "p_1795680994613_l0te",
+      "games": 2,
+      "wins": 1,
+      "fastestWinDarts": 9,
+      "totalMarks": 32,
+      "totalDarts": 18,
+      "bestScore": 45
+    },
+    {
+      "playerId": "p_1795682417791_rbnq",
+      "games": 1,
+      "wins": 0,
+      "fastestWinDarts": null,
+      "totalMarks": 26,
+      "totalDarts": 12,
+      "bestScore": 90
+    }
+  ],
+  "matches": [
+    {
+      "id": "m_1795700439021",
+      "date": "26. 11. 14:40",
+      "mode": "Cricket",
+      "doubleOut": false,
+      "endedByBulls": false,
+      "winnerId": "p_1795680994612_uc82",
+      "players": [
+        {
+          "id": "p_1795680994612_uc82",
+          "name": "Hráč 1",
+          "score": 156,
+          "darts": 13,
+          "bullsText": null
+        },
+        {
+          "id": "p_1795682417791_rbnq",
+          "name": "Hráč 3",
+          "score": 90,
+          "darts": 12,
+          "bullsText": null
+        }
+      ]
+    },
+    {
+      "id": "m_1795699695182",
+      "date": "26. 11. 14:28",
+      "mode": "Cricket",
+      "doubleOut": false,
+      "endedByBulls": false,
+      "winnerId": "p_1795680994613_l0te",
+      "players": [
+        {
+          "id": "p_1795680994612_uc82",
+          "name": "Hráč 1",
+          "score": 18,
+          "darts": 9,
+          "bullsText": null
+        },
+        {
+          "id": "p_1795680994613_l0te",
+          "name": "Hráč 2",
+          "score": 45,
+          "darts": 9,
+          "bullsText": null
+        }
+      ]
+    },
+    {
+      "id": "m_1795696442209",
+      "date": "26. 11. 13:34",
+      "mode": "Cricket",
+      "doubleOut": false,
+      "endedByBulls": false,
+      "winnerId": "p_1795680994612_uc82",
+      "players": [
+        {
+          "id": "p_1795680994612_uc82",
+          "name": "Hráč 1",
+          "score": 120,
+          "darts": 12,
+          "bullsText": null
+        },
+        {
+          "id": "p_1795680994613_l0te",
+          "name": "Hráč 2",
+          "score": 18,
+          "darts": 9,
+          "bullsText": null
+        }
+      ]
+    },
+    {
+      "id": "m_1795695869587",
+      "date": "26. 11. 13:24",
+      "mode": "Cricket",
+      "doubleOut": false,
+      "endedByBulls": false,
+      "winnerId": "p_1795680994613_l0te",
+      "players": [
+        {
+          "id": "p_1795680994612_uc82",
+          "name": "Hráč 1",
+          "score": 70,
+          "darts": 12,
+          "bullsText": null
+        },
+        {
+          "id": "p_1795680994613_l0te",
+          "name": "Hráč 2",
+          "score": 180,
+          "darts": 12,
+          "bullsText": null
+        }
+      ]
+    },
+    {
+      "id": "m_1795695833787",
+      "date": "26. 11. 13:23",
+      "mode": 301,
+      "doubleOut": true,
+      "endedByBulls": true,
+      "winnerId": "p_1795680994613_l0te",
+      "players": [
+        {
+          "id": "p_1795680994612_uc82",
+          "name": "Hráč 1",
+          "score": 34,
+          "darts": 20,
+          "bullsText": "Mimo"
+        },
+        {
+          "id": "p_1795680994613_l0te",
+          "name": "Hráč 2",
+          "score": 5,
+          "darts": 19,
+          "bullsText": "4.6 cm"
+        }
+      ]
+    },
+    {
+      "id": "m_1795695808771",
+      "date": "26. 11. 13:23",
+      "mode": 301,
+      "doubleOut": true,
+      "endedByBulls": false,
+      "winnerId": "p_1795680994612_uc82",
+      "players": [
+        {
+          "id": "p_1795680994612_uc82",
+          "name": "Hráč 1",
+          "score": 0,
+          "darts": 9,
+          "bullsText": null
+        },
+        {
+          "id": "p_1795680994613_l0te",
+          "name": "Hráč 2",
+          "score": 61,
+          "darts": 6,
+          "bullsText": null
+        }
+      ]
+    },
+    {
+      "id": "m_1795694637831",
+      "date": "26. 11. 13:03",
+      "mode": "Cricket",
+      "doubleOut": false,
+      "endedByBulls": false,
+      "winnerId": "p_1795680994612_uc82",
+      "players": [
+        {
+          "id": "p_1795680994612_uc82",
+          "name": "Hráč 1",
+          "score": 189,
+          "darts": 18,
+          "bullsText": null
+        },
+        {
+          "id": "p_1795680994613_l0te",
+          "name": "Hráč 2",
+          "score": 150,
+          "darts": 15,
+          "bullsText": null
+        }
+      ]
+    },
+    {
+      "id": "m_1795684312182",
+      "date": "26. 11. 10:11",
+      "mode": 301,
+      "doubleOut": true,
+      "endedByBulls": false,
+      "winnerId": "p_1795680994613_l0te",
+      "players": [
+        {
+          "id": "p_1795680994612_uc82",
+          "name": "Hráč 1",
+          "score": 230,
+          "darts": 12,
+          "bullsText": null
+        },
+        {
+          "id": "p_1795680994613_l0te",
+          "name": "Hráč 2",
+          "score": 0,
+          "darts": 9,
+          "bullsText": null
+        }
+      ]
+    },
+    {
+      "id": "m_1795684066915",
+      "date": "26. 11. 10:07",
+      "mode": 301,
+      "doubleOut": true,
+      "endedByBulls": false,
+      "winnerId": "p_1795680994612_uc82",
+      "players": [
+        {
+          "id": "p_1795680994612_uc82",
+          "name": "Hráč 1",
+          "score": 0,
+          "darts": 10,
+          "bullsText": null
+        },
+        {
+          "id": "p_1795680994613_l0te",
+          "name": "Hráč 2",
+          "score": 89,
+          "darts": 12,
+          "bullsText": null
+        },
+        {
+          "id": "p_1795682417791_rbnq",
+          "name": "Hráč 3",
+          "score": 91,
+          "darts": 12,
+          "bullsText": null
+        }
+      ]
+    },
+    {
+      "id": "m_1795682439841",
+      "date": "26. 11. 09:40",
+      "mode": 301,
+      "doubleOut": true,
+      "endedByBulls": false,
+      "winnerId": "p_1795680994612_uc82",
+      "players": [
+        {
+          "id": "p_1795680994612_uc82",
+          "name": "Hráč 1",
+          "score": 0,
+          "darts": 8,
+          "bullsText": null
+        },
+        {
+          "id": "p_1795680994613_l0te",
+          "name": "Hráč 2",
+          "score": 121,
+          "darts": 5,
+          "bullsText": null
+        },
+        {
+          "id": "p_1795682417791_rbnq",
+          "name": "Hráč 3",
+          "score": 121,
+          "darts": 5,
+          "bullsText": null
+        }
+      ]
+    },
+    {
+      "id": "m_1795681845961",
+      "date": "26. 11. 09:30",
+      "mode": 301,
+      "doubleOut": true,
+      "endedByBulls": false,
+      "winnerId": "p_1795680994613_l0te",
+      "players": [
+        {
+          "id": "p_1795680994612_uc82",
+          "name": "Hráč 1",
+          "score": 133,
+          "darts": 9,
+          "bullsText": null
+        },
+        {
+          "id": "p_1795680994613_l0te",
+          "name": "Hráč 2",
+          "score": 0,
+          "darts": 9,
+          "bullsText": null
+        }
+      ]
+    },
+    {
+      "id": "m_1795681834228",
+      "date": "26. 11. 09:30",
+      "mode": 301,
+      "doubleOut": true,
+      "endedByBulls": false,
+      "winnerId": "p_1795680994612_uc82",
+      "players": [
+        {
+          "id": "p_1795680994612_uc82",
+          "name": "Hráč 1",
+          "score": 0,
+          "darts": 13,
+          "bullsText": null
+        },
+        {
+          "id": "p_1795680994613_l0te",
+          "name": "Hráč 2",
+          "score": 100,
+          "darts": 12,
+          "bullsText": null
+        }
+      ]
+    },
+    {
+      "id": "m_1795681047228",
+      "date": "26. 11. 09:17",
+      "mode": 301,
+      "doubleOut": true,
+      "endedByBulls": false,
+      "winnerId": "p_1795680994612_uc82",
+      "players": [
+        {
+          "id": "p_1795680994612_uc82",
+          "name": "Hráč 1",
+          "score": 0,
+          "darts": 11,
+          "bullsText": null
+        },
+        {
+          "id": "p_1795680994613_l0te",
+          "name": "Hráč 2",
+          "score": 61,
+          "darts": 9,
+          "bullsText": null
+        }
+      ]
+    },
+    {
+      "id": "m_1795681009028",
+      "date": "26. 11. 09:16",
+      "mode": 301,
+      "doubleOut": true,
+      "endedByBulls": true,
+      "winnerId": "p_1795680994613_l0te",
+      "players": [
+        {
+          "id": "p_1795680994612_uc82",
+          "name": "Hráč 1",
+          "score": 21,
+          "darts": 16,
+          "bullsText": "Mimo"
+        },
+        {
+          "id": "p_1795680994613_l0te",
+          "name": "Hráč 2",
+          "score": 21,
+          "darts": 15,
+          "bullsText": "2.0 cm"
+        }
+      ]
+    }
+  ]
+}
