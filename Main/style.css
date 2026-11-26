@@ -207,6 +207,28 @@ button:hover {
     border: 2px solid var(--accent);
 }
 
+#game-mode optgroup.group-x01 {
+    color: #A70300;
+    background-color: #140202;
+    font-weight: 700;
+}
+
+#game-mode optgroup.group-x01 option {
+    color: var(--text);
+    background-color: #241B1B;
+}
+
+#game-mode optgroup.group-cricket {
+    color: var(--success);
+    background-color: #131c18;
+    font-weight: 700;
+}
+
+#game-mode optgroup.group-cricket option {
+    color: var(--text);
+    background-color: #17231e;
+}
+
 /* Leaderboard */
 .lb-header {
     display: flex;
@@ -989,4 +1011,32 @@ select option:disabled {
     .records-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* =========================================================
+   GLOBÁLNÍ PŘEPSÁNÍ MODRÉHO ZVÝRAZNĚNÍ NA --accent
+   ========================================================= */
+:root {
+    accent-color: var(--accent); /* Checkboxy, radio tlačítka, range slidery */
+}
+
+/* Označení textu myší */
+::selection {
+    background: var(--accent);
+    color: #111;
+}
+
+/* Modrý rámeček při kliknutí / focusu na inputy, selecty a tlačítka */
+input:focus,
+select:focus,
+button:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
+}
+
+/* Vybraná položka v rozbalovacím seznamu (Windows) */
+select option:checked {
+    color: #111;
+    background: var(--accent) linear-gradient(0deg, var(--accent) 0%, var(--accent) 100%);
 }

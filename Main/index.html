@@ -18,10 +18,14 @@
     <div class="form-group">
       <label for="game-mode">Režim hry</label>
       <select id="game-mode">
-        <option value="301">301</option>
-        <option value="501" selected>501</option>
-        <option value="701">701</option>
-        <option value="cricket">Cricket</option>
+        <optgroup label="X01" class="group-x01">
+          <option value="301">301</option>
+          <option value="501" selected>501</option>
+          <option value="701">701</option>
+        </optgroup>
+        <optgroup label="Ostatní" class="group-cricket">
+          <option value="cricket">Cricket</option>
+        </optgroup>
       </select>
     </div>
 
