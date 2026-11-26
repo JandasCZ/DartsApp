@@ -26,21 +26,45 @@ function buildDartboard() {
     svg.appendChild(boardLayer);
     svg.appendChild(dartsLayer);
 
+// 1) Zeď (vše mimo černý okraj terče) -> počítá se do zdí (isWall = true)
+    const wallZone = createEl('rect', {
+        x: -350, y: -350, width: 700, height: 700,
+        fill: 'transparent',
+        class: 'wall-zone'
+    });
+    wallZone.addEventListener('mouseenter', () => {
+        if (state.phase === 'normal') hoverInfo.textContent = 'Zeď – mimo terč (0 b.)';
+    });
+    wallZone.addEventListener('mouseleave', () => {
+        if (state.phase === 'normal') hoverInfo.textContent = 'Klikni na plošku terče';
+    });
+    wallZone.addEventListener('click', (e) => {
+        if (state.phase === 'normal') {
+            e.stopPropagation();
+            handleThrow(0, 'Zeď', false, true);
+        }
+    });
+    boardLayer.appendChild(wallZone);
+
+    // 2) Černý okraj terče (mimo hrací plochu) -> 0 b., ale NEPOČÍTÁ se do zdí (isWall = false)
     const outerRing = createEl('circle', {
         cx: 0, cy: 0, r: BOARD_RADIUS_SVG,
         fill: '#111317',
         stroke: '#333b46',
         'stroke-width': 3,
-        class: 'segment'
+        class: 'segment outer-ring'
     });
     outerRing.addEventListener('mouseenter', () => {
-        if (state.phase === 'normal') hoverInfo.textContent = 'Vedle (0)';
+        if (state.phase === 'normal') hoverInfo.textContent = 'Mimo hrací plochu (0 b.)';
     });
     outerRing.addEventListener('mouseleave', () => {
         if (state.phase === 'normal') hoverInfo.textContent = 'Klikni na plošku terče';
     });
-    outerRing.addEventListener('click', () => {
-        if (state.phase === 'normal') handleThrow(0, '0', false);
+    outerRing.addEventListener('click', (e) => {
+        if (state.phase === 'normal') {
+            e.stopPropagation();
+            handleThrow(0, '0', false, false);
+        }
     });
     boardLayer.appendChild(outerRing);
 
@@ -145,8 +169,6 @@ svg.addEventListener('click', (e) => {
     if (state.phase === 'bulls') {
         const pt = getSvgPoint(e);
         handleBullsThrow(pt.x, pt.y);
-    } else if (state.phase === 'normal' && e.target === svg) {
-        handleThrow(0, '0', false, true); // Kliknutí až za černým okrajem = zeď
     }
 });
 

@@ -969,6 +969,19 @@ select option:disabled {
     opacity: 1;
 }
 
+.wall-zone {
+    cursor: pointer;
+    transition: fill 0.15s ease;
+}
+
+.wall-zone:hover {
+    fill: rgba(239, 68, 68, 0.08);
+}
+
+#dartboard.bulls-mode .wall-zone:hover {
+    fill: transparent;
+}
+
 /* =========================================================
    VLASTNÍ TMÁVÉ POSUVNÍKY (globálně pro celou stránku)
    ========================================================= */

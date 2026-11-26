@@ -332,7 +332,7 @@ endGameBtn.addEventListener('click', () => {
     renderGame();
 });
 
-missBtn.addEventListener('click', () => handleThrow(0, '0', false, true));
+missBtn.addEventListener('click', () => handleThrow(0, 'Zeď', false, true));
 
 function undoLastAction() {
     if (historyStack.length === 0) return;
