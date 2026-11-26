@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Počítadlo šipek</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- NASTAVENÍ HRY -->
+<div id="setup-screen">
+  <h1>🎯 Počítadlo šipek</h1>
+
+  <div class="form-group">
+    <label for="game-mode">Režim hry</label>
+    <select id="game-mode">
+      <option value="501" selected>501 (Středy po 12. kole)</option>
+      <option value="301">301 (Středy po 8. kole)</option>
+      <option value="701">701 (Středy po 16. kole)</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="player-count">Počet hráčů</label>
+    <select id="player-count">
+      <option value="1">1 hráč</option>
+      <option value="2" selected>2 hráči</option>
+      <option value="3">3 hráči</option>
+      <option value="4">4 hráči</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>Jména hráčů</label>
+    <div id="player-names" class="player-inputs"></div>
+  </div>
+
+  <label class="checkbox-row">
+    <input type="checkbox" id="double-out" />
+    <span>Double Out (zavírání dvojnásobkem nebo středem)</span>
+  </label>
+
+  <button class="btn-primary" id="start-btn">Spustit hru</button>
+</div>
+
+<!-- HERNÍ OBRAZOVKA -->
+<div id="game-screen">
+  <div class="board-container">
+    <div id="hover-info">Klikni na plošku terče</div>
+    <svg id="dartboard" viewBox="-275 -275 550 550"></svg>
+    <div class="board-controls">
+      <button class="btn-secondary" id="miss-btn">Vedle (0)</button>
+      <button class="btn-secondary" id="undo-btn">↩ Zpět</button>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <div class="top-bar">
+      <div class="mode-badge" id="mode-display"></div>
+      <button class="btn-danger btn-small" id="new-game-btn">Nová hra</button>
+    </div>
+
+    <button class="btn-bulls" id="bulls-btn">🎯 Středy?</button>
+
+    <div id="status-banner"></div>
+
+    <div class="turn-box" id="turn-box">
+      <div class="label" id="turn-label">Aktuální kolo</div>
+      <div class="dart-slots" id="dart-slots">
+        <div class="dart-slot" id="slot-0">-</div>
+        <div class="dart-slot" id="slot-1">-</div>
+        <div class="dart-slot" id="slot-2">-</div>
+      </div>
+    </div>
+
+    <div class="players-grid" id="players-grid"></div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
