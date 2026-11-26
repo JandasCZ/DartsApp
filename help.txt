@@ -1,5 +1,5 @@
 || SERVER ||
-        || Instalace npx ||
+        || Instalace npx - Windows||
         winget install OpenJS.NodeJS.LTS
         $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 
