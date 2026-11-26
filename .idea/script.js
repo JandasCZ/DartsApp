@@ -11,12 +11,14 @@ const SCORING_RADIUS_SVG = 186; // vnější okraj Double prstence
 // Klíče pro dvě oddělené tabulky v localStorage
 const STORAGE_KEY_PLAYERS = 'darts_db_players';
 const STORAGE_KEY_STATS = 'darts_db_stats';
+const STORAGE_KEY_MATCHES = 'darts_db_matches';
 
 // =========================================================
 // DATABÁZOVÁ VRSTVA (2 oddělené tabulky: players & stats)
 // =========================================================
 let playersTable = []; // [{ id: 'p_1', name: 'Jan' }]
 let statsTable = [];   // [{ playerId: 'p_1', wins: 0, t20: 0, t19: 0, misses: 0, bestTurn: 0 }]
+let matchesTable = [];
 
 // Záloha DB před přičtením konce hry (kvůli tlačítku "Omyl, vrátit poslední hod")
 let preWinDbSnapshot = null;
@@ -25,15 +27,18 @@ function loadDatabase() {
     try {
         playersTable = JSON.parse(localStorage.getItem(STORAGE_KEY_PLAYERS)) || [];
         statsTable = JSON.parse(localStorage.getItem(STORAGE_KEY_STATS)) || [];
+        matchesTable = JSON.parse(localStorage.getItem(STORAGE_KEY_MATCHES)) || [];
     } catch {
         playersTable = [];
         statsTable = [];
+        matchesTable = [];
     }
 }
 
 function saveDatabase() {
     localStorage.setItem(STORAGE_KEY_PLAYERS, JSON.stringify(playersTable));
     localStorage.setItem(STORAGE_KEY_STATS, JSON.stringify(statsTable));
+    localStorage.setItem(STORAGE_KEY_MATCHES, JSON.stringify(matchesTable));
 }
 
 function getOrCreatePlayer(rawName) {
@@ -77,7 +82,8 @@ function ensureStatsRow(playerId) {
 function commitMatchToDb(winnerPlayerId) {
     preWinDbSnapshot = {
         players: JSON.parse(JSON.stringify(playersTable)),
-        stats: JSON.parse(JSON.stringify(statsTable))
+        stats: JSON.parse(JSON.stringify(statsTable)),
+        matches: JSON.parse(JSON.stringify(matchesTable))
     };
 
     state.players.forEach(p => {
@@ -96,6 +102,31 @@ function commitMatchToDb(winnerPlayerId) {
         }
     });
 
+    // Záznam do historie posledních her
+    const matchRecord = {
+        id: `m_${Date.now()}`,
+        date: new Date().toLocaleString('cs-CZ', {
+            day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+        }),
+        mode: state.startScore,
+        doubleOut: state.doubleOut,
+        endedByBulls: state.phase === 'bulls',
+        winnerId: winnerPlayerId,
+        players: state.players.map((p, idx) => {
+            const bThrow = state.bullsThrows.find(t => t.playerIndex === idx);
+            return {
+                id: p.id,
+                name: p.name,
+                score: p.score,
+                darts: p.dartsThrown,
+                bullsText: bThrow ? (bThrow.isMiss ? 'Mimo' : `${bThrow.distCm.toFixed(1)} cm`) : null
+            };
+        })
+    };
+
+    matchesTable.unshift(matchRecord);
+    if (matchesTable.length > 20) matchesTable.length = 20;
+
     saveDatabase();
 }
 
@@ -103,6 +134,7 @@ function rollbackLastDbCommit() {
     if (!preWinDbSnapshot) return;
     playersTable = preWinDbSnapshot.players;
     statsTable = preWinDbSnapshot.stats;
+    matchesTable = preWinDbSnapshot.matches;
     preWinDbSnapshot = null;
     saveDatabase();
 }
@@ -320,7 +352,7 @@ function renderLeaderboard() {
       <div class="record-sub">${topTriples && topTriples.t20t19 > 0 ? `${topTriples.t20}× T20 • ${topTriples.t19}× T19` : 'Zatím nic'}</div>
     </div>
     <div class="record-card">
-      <div class="record-title">🧱 Nejvíc zdí</div>
+      <div class="record-title">🧱 Nejvíce zdí</div>
       <div class="record-player">${topMisses && topMisses.misses > 0 ? escapeHtml(topMisses.name) : '—'}</div>
       <div class="record-value">${topMisses && topMisses.misses > 0 ? `${topMisses.misses}×` : '0×'}</div>
       <div class="record-sub">Hodů za 0 bodů</div>
@@ -333,7 +365,6 @@ function renderLeaderboard() {
     </div>
   `;
 
-    // 3) Tabulka všech hráčů
     // 3) Tabulka všech hráčů
     const tbody = document.getElementById('lb-table-body');
     if (byWins.length === 0) {
@@ -351,13 +382,41 @@ function renderLeaderboard() {
       </tr>
     `).join('');
     }
+
+    // 4) Poslední odehrané hry
+    const recentEl = document.getElementById('recent-games-list');
+    if (matchesTable.length === 0) {
+        recentEl.innerHTML = '<div class="lb-empty" style="font-size:0.85rem;">Zatím žádné odehrané hry.</div>';
+    } else {
+        recentEl.innerHTML = matchesTable.map(m => {
+            const modeTag = `${m.mode}${m.doubleOut ? ' DO' : ''}${m.endedByBulls ? ' • Středy' : ''}`;
+            const chips = m.players.map(p => {
+                const isWinner = p.id === m.winnerId;
+                const detail = m.endedByBulls && p.bullsText
+                    ? p.bullsText
+                    : (isWinner ? `${p.darts} šipek` : `zb. ${p.score}`);
+                return `<span class="recent-player-chip${isWinner ? ' winner' : ''}">${isWinner ? '🏆 ' : ''}${escapeHtml(p.name)} (${detail})</span>`;
+            }).join('');
+
+            return `
+        <div class="recent-item">
+          <div class="recent-top">
+            <span class="recent-badge">${modeTag}</span>
+            <span>${escapeHtml(m.date)}</span>
+          </div>
+          <div class="recent-players">${chips}</div>
+        </div>
+      `;
+        }).join('');
+    }
 }
 
 // Export / Import JSON databáze
 document.getElementById('export-db-btn').addEventListener('click', () => {
     const payload = {
         players: playersTable,
-        stats: statsTable
+        stats: statsTable,
+        matches: matchesTable
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -384,6 +443,7 @@ importFileInput.addEventListener('change', (e) => {
             }
             playersTable = parsed.players;
             statsTable = parsed.stats;
+            matchesTable = Array.isArray(parsed.matches) ? parsed.matches : []; // <--- SEM
             saveDatabase();
             renderPlayerInputs();
             renderLeaderboard();
