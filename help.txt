@@ -1,0 +1,8 @@
+|| SERVER ||
+        || Instalace npx ||
+        winget install OpenJS.NodeJS.LTS
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+
+        || Inicializace serveru ||
+         npx live-server
+        (Ukončení - ctrl+c)
