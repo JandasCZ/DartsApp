@@ -56,7 +56,16 @@ function getOrCreatePlayer(rawName) {
 function ensureStatsRow(playerId) {
     let row = statsTable.find(s => s.playerId === playerId);
     if (!row) {
-        row = { playerId, wins: 0, t20: 0, t19: 0, misses: 0, bestTurn: 0 };
+        row = {
+            playerId,
+            wins: 0,
+            t20: 0,
+            t19: 0,
+            misses: 0,
+            bestTurn: 0,
+            scoringPoints: 0,
+            scoringDarts: 0
+        };
         statsTable.push(row);
     }
     return row;
@@ -74,6 +83,8 @@ function commitMatchToDb(winnerPlayerId) {
         row.t20 += p.matchStats.t20;
         row.t19 += p.matchStats.t19;
         row.misses += p.matchStats.misses;
+        row.scoringPoints = (row.scoringPoints || 0) + p.matchStats.scoringPoints;
+        row.scoringDarts = (row.scoringDarts || 0) + p.matchStats.scoringDarts;
         if (p.matchStats.bestTurn > row.bestTurn) {
             row.bestTurn = p.matchStats.bestTurn;
         }
@@ -223,12 +234,15 @@ function renderLeaderboard() {
     // Spojení tabulek players + stats přes playerId (JOIN)
     const joined = playersTable.map(p => {
         const s = statsTable.find(row => row.playerId === p.id) || {
-            wins: 0, t20: 0, t19: 0, misses: 0, bestTurn: 0
+            wins: 0, t20: 0, t19: 0, misses: 0, bestTurn: 0, scoringPoints: 0, scoringDarts: 0
         };
+        const sPoints = s.scoringPoints || 0;
+        const sDarts = s.scoringDarts || 0;
         return {
             id: p.id,
             name: p.name,
             wins: s.wins || 0,
+            avg: sDarts > 0 ? ((sPoints / sDarts) * 3).toFixed(1) : '0.0',
             t20: s.t20 || 0,
             t19: s.t19 || 0,
             t20t19: (s.t20 || 0) + (s.t19 || 0),
@@ -290,14 +304,16 @@ function renderLeaderboard() {
   `;
 
     // 3) Tabulka všech hráčů
+    // 3) Tabulka všech hráčů
     const tbody = document.getElementById('lb-table-body');
     if (byWins.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="lb-empty">Zatím nejsou uloženi žádní hráči. Odehraj první hru!</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="lb-empty">Zatím nejsou uloženi žádní hráči. Odehraj první hru!</td></tr>';
     } else {
         tbody.innerHTML = byWins.map(p => `
       <tr>
         <td><strong>${escapeHtml(p.name)}</strong></td>
         <td>${p.wins}</td>
+        <td>${p.avg}</td>
         <td>${p.t20t19} <span style="color:var(--muted);font-size:0.76rem;">(${p.t20}/${p.t19})</span></td>
         <td>${p.misses}</td>
         <td>${p.bestTurn}</td>
@@ -596,7 +612,7 @@ function startGame(startScore, doubleOut, selectedPlayers) {
         score: startScore,
         dartsThrown: 0,
         lastTurn: [],
-        matchStats: { t20: 0, t19: 0, misses: 0, bestTurn: 0 }
+        matchStats: { t20: 0, t19: 0, misses: 0, bestTurn: 0, scoringPoints: 0, scoringDarts: 0 }
     }));
 
     state = {
@@ -609,6 +625,8 @@ function startGame(startScore, doubleOut, selectedPlayers) {
         currentPlayerIndex: 0,
         currentTurn: [],
         currentTurnPoints: 0,
+        turnScoringPoints: 0,
+        turnScoringDarts: 0,
         turnStartScore: startScore,
         bullsThrows: [],
         winner: null,
@@ -664,6 +682,7 @@ function handleThrow(points, label, isDouble) {
     state.statusType = null;
 
     const player = state.players[state.currentPlayerIndex];
+    const scoreBeforeThrow = player.score;
     const newScore = player.score - points;
     player.dartsThrown += 1;
 
@@ -672,6 +691,12 @@ function handleThrow(points, label, isDouble) {
     if (label === 'T19') player.matchStats.t19 += 1;
     if (points === 0) player.matchStats.misses += 1;
 
+    // Do průměru počítáme jen šipky hozené při skóre >= 40
+    if (scoreBeforeThrow >= 40) {
+        state.turnScoringDarts += 1;
+        state.turnScoringPoints += points;
+    }
+
     const isBust =
         newScore < 0 ||
         (state.doubleOut && newScore === 1) ||
@@ -679,6 +704,7 @@ function handleThrow(points, label, isDouble) {
 
     if (isBust) {
         player.score = state.turnStartScore;
+        player.matchStats.scoringDarts += state.turnScoringDarts; // Při BUSTu 0 bodů
         player.lastTurn = [...state.currentTurn, `${label} (BUST)`];
         state.statusMessage = `💥 ${player.name} přehodil (BUST)! Skóre se vrací na ${state.turnStartScore}.`;
         state.statusType = 'bust';
@@ -687,6 +713,8 @@ function handleThrow(points, label, isDouble) {
         player.score = 0;
         state.currentTurn.push(label);
         state.currentTurnPoints += points;
+        player.matchStats.scoringDarts += state.turnScoringDarts;
+        player.matchStats.scoringPoints += state.turnScoringPoints;
         if (state.currentTurnPoints > player.matchStats.bestTurn) {
             player.matchStats.bestTurn = state.currentTurnPoints;
         }
@@ -701,6 +729,8 @@ function handleThrow(points, label, isDouble) {
         state.currentTurn.push(label);
         state.currentTurnPoints += points;
         if (state.currentTurn.length === 3) {
+            player.matchStats.scoringDarts += state.turnScoringDarts;
+            player.matchStats.scoringPoints += state.turnScoringPoints;
             if (state.currentTurnPoints > player.matchStats.bestTurn) {
                 player.matchStats.bestTurn = state.currentTurnPoints;
             }
@@ -727,6 +757,8 @@ function nextPlayer() {
     state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
     state.currentTurn = [];
     state.currentTurnPoints = 0;
+    state.turnScoringPoints = 0;
+    state.turnScoringDarts = 0;
     state.turnStartScore = state.players[state.currentPlayerIndex].score;
 }
 
@@ -736,6 +768,8 @@ function startBullsPhase() {
     state.currentPlayerIndex = 0;
     state.currentTurn = [];
     state.currentTurnPoints = 0;
+    state.turnScoringPoints = 0;
+    state.turnScoringDarts = 0;
     state.bullsThrows = [];
     state.statusMessage = '🎯 Rozhodující STŘEDY! Každý hráč hodí 1 šipku co nejblíže středu.';
     state.statusType = 'info';
