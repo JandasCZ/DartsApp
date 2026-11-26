@@ -7,6 +7,9 @@
     --muted: #9ca3af;
     --danger: #ef4444;
     --success: #22c55e;
+    --gold: #facc15;
+    --silver: #cbd5e1;
+    --bronze: #d97706;
 }
 
 * {
@@ -23,18 +26,40 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 16px;
+    padding: 20px 16px;
 }
 
-/* Setup obrazovka */
+/* Menu layout (Setup + Leaderboard vedle sebe) */
 #setup-screen {
-    background: var(--panel);
-    padding: 28px;
-    border-radius: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: flex-start;
+    justify-content: center;
     width: 100%;
-    max-width: 460px;
-    margin-top: 40px;
+    max-width: 1120px;
+    margin-top: 16px;
+}
+
+.setup-card {
+    background: var(--panel);
+    padding: 26px;
+    border-radius: 16px;
+    flex: 1 1 380px;
+    max-width: 440px;
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+.leaderboard-card {
+    background: var(--panel);
+    padding: 26px;
+    border-radius: 16px;
+    flex: 1.4 1 460px;
+    max-width: 640px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
 }
 
 h1 {
@@ -63,19 +88,35 @@ input[type="text"] {
     border: 1px solid #333b46;
     background: var(--bg);
     color: var(--text);
-    font-size: 1rem;
+    font-size: 0.96rem;
 }
 
 .player-inputs {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
 }
 
 .player-input-row {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+}
+
+.player-combo {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+}
+
+.player-combo select {
+    flex: 1;
+    min-width: 0;
+}
+
+.player-combo input {
+    flex: 1;
+    min-width: 0;
 }
 
 .color-dot {
@@ -97,6 +138,14 @@ input[type="text"] {
     width: 18px;
     height: 18px;
     accent-color: var(--accent);
+}
+
+.setup-error {
+    color: #fca5a5;
+    font-size: 0.88rem;
+    margin-bottom: 10px;
+    min-height: 18px;
+    text-align: center;
 }
 
 button {
@@ -136,8 +185,8 @@ button:hover {
 }
 
 .btn-small {
-    padding: 6px 12px;
-    font-size: 0.85rem;
+    padding: 6px 11px;
+    font-size: 0.82rem;
 }
 
 .btn-bulls {
@@ -153,6 +202,215 @@ button:hover {
     background: var(--panel-light);
     color: var(--accent);
     border: 2px solid var(--accent);
+}
+
+/* Leaderboard */
+.lb-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.lb-header h2 {
+    font-size: 1.35rem;
+    color: var(--accent);
+}
+
+.db-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.section-caption {
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+/* Pedestály (Pódium) */
+.podium-section {
+    background: var(--bg);
+    border: 1px solid #2a313b;
+    border-radius: 14px;
+    padding: 16px 12px 0;
+}
+
+.podium {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 12px;
+    min-height: 170px;
+}
+
+.podium-slot {
+    flex: 1;
+    max-width: 155px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.podium-trophy {
+    font-size: 1.75rem;
+    margin-bottom: 4px;
+}
+
+.podium-slot.place-1 .podium-trophy {
+    font-size: 2.15rem;
+}
+
+.podium-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-align: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-bottom: 6px;
+}
+
+.podium-block {
+    width: 100%;
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 6px;
+    font-weight: 800;
+}
+
+.podium-slot.place-1 .podium-block {
+    height: 92px;
+    background: linear-gradient(180deg, rgba(250, 204, 21, 0.25), rgba(250, 204, 21, 0.08));
+    border: 2px solid var(--gold);
+    border-bottom: none;
+    color: var(--gold);
+}
+
+.podium-slot.place-2 .podium-block {
+    height: 68px;
+    background: linear-gradient(180deg, rgba(203, 213, 225, 0.2), rgba(203, 213, 225, 0.06));
+    border: 2px solid var(--silver);
+    border-bottom: none;
+    color: var(--silver);
+}
+
+.podium-slot.place-3 .podium-block {
+    height: 50px;
+    background: linear-gradient(180deg, rgba(217, 119, 6, 0.24), rgba(217, 119, 6, 0.07));
+    border: 2px solid var(--bronze);
+    border-bottom: none;
+    color: #f59e0b;
+}
+
+.podium-rank {
+    font-size: 1.15rem;
+    line-height: 1.1;
+}
+
+.podium-wins {
+    font-size: 0.78rem;
+    color: var(--text);
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+/* Karty rekordů */
+.records-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.record-card {
+    background: var(--bg);
+    border: 1px solid #2a313b;
+    border-radius: 12px;
+    padding: 12px 10px;
+    text-align: center;
+}
+
+.record-title {
+    font-size: 0.76rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+}
+
+.record-player {
+    font-size: 0.96rem;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.record-value {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--accent);
+    margin-top: 3px;
+}
+
+.record-sub {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 2px;
+}
+
+/* Tabulka všech hráčů */
+.lb-table-wrap {
+    max-height: 210px;
+    overflow-y: auto;
+    border: 1px solid #2a313b;
+    border-radius: 10px;
+    background: var(--bg);
+}
+
+.lb-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.86rem;
+}
+
+.lb-table th,
+.lb-table td {
+    padding: 8px 10px;
+    text-align: center;
+    border-bottom: 1px solid #232931;
+}
+
+.lb-table th:first-child,
+.lb-table td:first-child {
+    text-align: left;
+    padding-left: 12px;
+}
+
+.lb-table th {
+    position: sticky;
+    top: 0;
+    background: #171b20;
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.78rem;
+}
+
+.lb-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.lb-empty {
+    color: var(--muted);
+    text-align: center !important;
+    padding: 16px !important;
 }
 
 /* Herní obrazovka */
@@ -491,4 +749,10 @@ svg#dartboard.bulls-mode .segment {
     opacity: 1;
     transform: translateY(0) scale(1);
     pointer-events: auto;
+}
+
+@media (max-width: 540px) {
+    .records-grid {
+        grid-template-columns: 1fr;
+    }
 }

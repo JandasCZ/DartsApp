@@ -8,40 +8,81 @@
 </head>
 <body>
 
-<!-- NASTAVENÍ HRY -->
+<!-- MENU: NASTAVENÍ HRY + LEADERBOARD -->
 <div id="setup-screen">
-  <h1>🎯 Počítadlo šipek</h1>
+  <!-- Levý panel: Nastavení hry -->
+  <div class="setup-card">
+    <h1>🎯 Počítadlo šipek</h1>
 
-  <div class="form-group">
-    <label for="game-mode">Režim hry</label>
-    <select id="game-mode">
-      <option value="301">301</option>
-      <option value="501" selected>501Středy</option>
-      <option value="701">701</option>
-    </select>
+    <div class="form-group">
+      <label for="game-mode">Režim hry</label>
+      <select id="game-mode">
+        <option value="501" selected>501</option>
+        <option value="301">301</option>
+        <option value="701">701</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="player-count">Počet hráčů</label>
+      <select id="player-count">
+        <option value="1">1 hráč</option>
+        <option value="2" selected>2 hráči</option>
+        <option value="3">3 hráči</option>
+        <option value="4">4 hráči</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Výběr hráčů (vyber z databáze nebo zadej nového)</label>
+      <div id="player-names" class="player-inputs"></div>
+    </div>
+
+    <label class="checkbox-row">
+      <input type="checkbox" id="double-out" />
+      <span>Double Out (zavírání dvojnásobkem nebo středem)</span>
+    </label>
+
+    <div id="setup-error" class="setup-error"></div>
+    <button class="btn-primary" id="start-btn">Spustit hru</button>
   </div>
 
-  <div class="form-group">
-    <label for="player-count">Počet hráčů</label>
-    <select id="player-count">
-      <option value="1">1 hráč</option>
-      <option value="2" selected>2 hráči</option>
-      <option value="3">3 hráči</option>
-      <option value="4">4 hráči</option>
-    </select>
+  <!-- Pravý panel: Leaderboard -->
+  <div class="leaderboard-card">
+    <div class="lb-header">
+      <h2>🏆 Žebříček hráčů</h2>
+      <div class="db-actions">
+        <button class="btn-secondary btn-small" id="export-db-btn" title="Uložit databázi do JSON souboru">💾 Export JSON</button>
+        <button class="btn-secondary btn-small" id="import-db-btn" title="Načíst databázi z JSON souboru">📂 Import JSON</button>
+        <input type="file" id="import-db-file" accept=".json" hidden />
+      </div>
+    </div>
+
+    <!-- Pedestály: Nejvíc výher -->
+    <div class="podium-section">
+      <div class="section-caption">Nejvíc výher</div>
+      <div class="podium" id="wins-podium"></div>
+    </div>
+
+    <!-- Karty rekordů -->
+    <div class="records-grid" id="records-grid"></div>
+
+    <!-- Přehledová tabulka všech hráčů -->
+    <div class="lb-table-wrap">
+      <table class="lb-table">
+        <thead>
+        <tr>
+          <th>Hráč</th>
+          <th>Výhry</th>
+          <th>T20/T19</th>
+          <th>Zdi</th>
+          <th>Max kolo</th>
+        </tr>
+        </thead>
+        <tbody id="lb-table-body"></tbody>
+      </table>
+    </div>
   </div>
-
-  <div class="form-group">
-    <label>Jména hráčů</label>
-    <div id="player-names" class="player-inputs"></div>
-  </div>
-
-  <label class="checkbox-row">
-    <input type="checkbox" id="double-out" />
-    <span>Double Out (zavírání dvojnásobkem nebo středem)</span>
-  </label>
-
-  <button class="btn-primary" id="start-btn">Spustit hru</button>
 </div>
 
 <!-- HERNÍ OBRAZOVKA -->
@@ -58,7 +99,7 @@
   <div class="sidebar">
     <div class="top-bar">
       <div class="mode-badge" id="mode-display"></div>
-      <button class="btn-danger btn-small" id="new-game-btn">Ukončit hru</button>
+      <button class="btn-danger btn-small" id="new-game-btn">Nová hra</button>
     </div>
 
     <button class="btn-bulls" id="bulls-btn">🎯 Středy?</button>
