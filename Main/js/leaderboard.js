@@ -184,27 +184,31 @@ function renderLeaderboard() {
             const s = cricketStatsTable.find(row => row.playerId === p.id) || {
                 games: 0, wins: 0, fastestWinDarts: null, totalMarks: 0, totalDarts: 0, bestScore: 0
             };
-            const mprNum = s.totalDarts > 0 ? (s.totalMarks / s.totalDarts) * 3 : 0;
+            const effNum = s.totalDarts > 0 ? (s.totalMarks / s.totalDarts) * 100 : 0;
             return {
                 id: p.id,
                 name: p.name,
                 games: s.games || 0,
                 wins: s.wins || 0,
-                mpr: mprNum.toFixed(2),
-                mprNum,
+                eff: `${effNum.toFixed(1)} %`,
+                effNum,
                 fastestWinDarts: s.fastestWinDarts ?? null,
                 bestScore: s.bestScore || 0
             };
         });
 
         const byWins = [...joined].sort((a, b) =>
-            b.wins - a.wins || b.mprNum - a.mprNum || (a.fastestWinDarts ?? 9999) - (b.fastestWinDarts ?? 9999)
+            b.wins - a.wins || b.effNum - a.effNum || (a.fastestWinDarts ?? 9999) - (b.fastestWinDarts ?? 9999)
         );
         renderPodium(byWins);
 
         const fastest = [...joined].filter(p => p.fastestWinDarts !== null).sort((a, b) => a.fastestWinDarts - b.fastestWinDarts)[0];
-        const topMpr = [...joined].filter(p => p.mprNum > 0).sort((a, b) => b.mprNum - a.mprNum)[0];
+        const topEff = [...joined].filter(p => p.effNum > 0).sort((a, b) => b.effNum - a.effNum)[0];
         const topScore = [...joined].filter(p => p.bestScore > 0).sort((a, b) => b.bestScore - a.bestScore)[0];
+        const activeCricketPlayers = joined.filter(p => p.games > 0);
+        const avgEff = activeCricketPlayers.length > 0
+            ? (activeCricketPlayers.reduce((sum, p) => sum + p.effNum, 0) / activeCricketPlayers.length).toFixed(1)
+            : '0.0';
 
         recordsEl.innerHTML = `
       <div class="record-card">
@@ -214,10 +218,10 @@ function renderLeaderboard() {
         <div class="record-sub">Nejméně šipek k výhře</div>
       </div>
       <div class="record-card">
-        <div class="record-title">🎯 Nejlepší MPR</div>
-        <div class="record-player">${topMpr ? escapeHtml(topMpr.name) : '—'}</div>
-        <div class="record-value">${topMpr ? topMpr.mpr : '0.00'}</div>
-        <div class="record-sub">Značek na 1 kolo</div>
+        <div class="record-title">🎯 Přesnost</div>
+        <div class="record-player">${topEff ? escapeHtml(topEff.name) : '—'}</div>
+        <div class="record-value">${topEff ? topEff.eff : '0.0 %'}</div>
+        <div class="record-sub">Max. 300 % (avg. ${avgEff} %)</div>
       </div>
       <div class="record-card">
         <div class="record-title">🔥 Nejvyšší skóre</div>
@@ -232,7 +236,7 @@ function renderLeaderboard() {
         <th>Hráč</th>
         <th>Hry</th>
         <th>Výhry</th>
-        <th>MPR</th>
+        <th>Efektivita</th>
         <th>Nejrychlejší</th>
         <th>Max skóre</th>
       </tr>
@@ -246,7 +250,7 @@ function renderLeaderboard() {
           <td><strong>${escapeHtml(p.name)}</strong></td>
           <td>${p.games}</td>
           <td>${p.wins}</td>
-          <td>${p.mpr}</td>
+          <td>${p.eff}</td>
           <td>${p.fastestWinDarts !== null ? `${p.fastestWinDarts} š.` : '—'}</td>
           <td>${p.bestScore}</td>
         </tr>

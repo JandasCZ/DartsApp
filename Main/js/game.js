@@ -463,6 +463,12 @@ function renderGame() {
         const avg = p.dartsThrown > 0
             ? (((state.startScore - p.score) / p.dartsThrown) * 3).toFixed(1)
             : '0.0';
+        const cricketEff = p.dartsThrown > 0
+            ? ((p.matchStats.cricketMarksHit / p.dartsThrown) * 100).toFixed(0)
+            : '0';
+        const statLabel = state.gameMode === 'cricket'
+            ? `Efektivita: ${cricketEff} %`
+            : `Průměr: ${avg}`;
 
         const medals = ['🥇', '🥈', '🥉'];
         const rightValue = state.phase === 'bulls'
@@ -480,7 +486,7 @@ function renderGame() {
         <div class="player-meta">
           ${state.phase === 'bulls'
             ? `Skóre ze hry: ${p.score} b.`
-            : `Průměr: ${avg} | Šipek: ${p.dartsThrown}${p.lastTurn.length ? `<br>Poslední kolo: ${p.lastTurn.join(', ')}` : ''}`
+            : `${statLabel} | Šipek: ${p.dartsThrown}${p.lastTurn.length ? `<br>Poslední kolo: ${p.lastTurn.join(', ')}` : ''}`
         }
         </div>
       </div>
